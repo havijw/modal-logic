@@ -28,7 +28,7 @@ def stripOuterParens(arg):
 def mainConnective(arg):
     arg = stripOuterParens(arg)
     
-    connectives = ['->', '/\\', '\\/', '~']
+    connectives = ['->', '/\\', '\\/', '~', '|=|', '<>']
     
     if '(' not in arg:
         for con in connectives:
@@ -48,6 +48,28 @@ def mainConnective(arg):
             if argDupe == '':
                 return '~'
         
+        elif arg[0:3] == '|=|':
+            while arg[0:3] == '|=|':
+                arg = arg[3:]
+            
+            argDupe = arg[1:]
+            while not argDupe.count('(') == argDupe.count(')'):
+                argDupe = argDupe[1:]
+            
+            if argDupe == '':
+                return '|=|'
+        
+        elif arg[0:2] == '<>':
+            while arg[0:2] == '<>':
+                arg = arg[2:]
+            
+            argDupe = arg[1:]
+            while not argDupe.count('(') == argDupe.count(')'):
+                argDupe = argDupe[1:]
+            
+            if argDupe == '':
+                return '<>'
+
         while not arg[0:2] in connectives:
             arg = arg[1:]
         
@@ -82,8 +104,8 @@ def firstPart(arg):
     # store main connecitve of argument
     con = mainConnective(arg)
     
-    # for negated argument, return nothing
-    if con == '~':
+    # for single sentence connectivess, return nothing
+    if con == '~' or con == '|=|' or con == '<>':
         return ''
 
     # build first part of argument
@@ -132,6 +154,21 @@ def secondPart(arg):
     # until the main connective is reached
     p2 = ''
     if '(' in arg:
+        # handle |=| separately because it's longer than all the others
+        if con == '|=|':
+            while not arg[-2:] == con:
+                p2 = arg[-1] + p2
+                arg = arg[:-1]
+            
+            while not p2.count('(') == p2.count(')'):
+                p2 = con + p2
+                arg = arg[:-2]
+                while not arg[-3:] == con:
+                    p2 = arg[-1] + p2
+                    arg = arg[:-1]
+            
+            return normalize(p2)
+
         # move end of arg to p2 until the main connective is reached
         while not arg[-2:] == con:
             p2 = arg[-1] + p2
@@ -151,6 +188,12 @@ def secondPart(arg):
     # if no parentheses in the argument, just
     # take everything after the main connective
     else:
+        if con == '|=|':
+            while not arg[-3:] == con:
+                p2 = arg[-1] + p2
+                arg = arg[:-1]
+            return normalize(p2)
+        
         while not arg[-2:] == con:
             p2 = arg[-1] + p2
             arg = arg[:-1]
@@ -174,7 +217,7 @@ def normalize(arg):
 
     # reassemble the pieces
     # negation doesn't need any spacing
-    if mainCon == '~':
+    if mainCon == '~' or mainCon == '|=|' or mainCon == '<>':
         arg = mainCon + p2
     # otherwise add spaces in between pieces
     else:
@@ -192,3 +235,24 @@ def normalize(arg):
             arg = '(' + arg + ')'
     
     return arg
+
+def test_mainConnective():
+    props = ['|=|P', '<>P', '|=|P -> Q', '<>P -> Q']
+
+    for prop in props:
+        print(mainConnective(prop))
+
+def test_firstPart():
+    props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
+
+    for prop in props:
+        print(prop, firstPart(prop))
+
+def test_secondPart():
+    props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
+
+    for prop in props:
+        print(prop, secondPart(prop))
+
+if __name__ == '__main__':
+    test_secondPart()
