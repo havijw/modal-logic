@@ -1,5 +1,5 @@
 # determines if an argument has redundant outer parentheses
-def hasOuterParens(arg):
+def has_outer_parens(arg):
     if not (arg[0] == '(' and arg[-1] == ')'):
         return False
     
@@ -12,86 +12,94 @@ def hasOuterParens(arg):
     return False
 
 # takes redundant outer parentheses off for consistent formatting
-def stripOuterParens(arg):
+def strip_outer_parens(arg):
     # if the argument is nothing, just return it
     if arg == '':
         return arg
     
     arg = arg.strip()
 
-    # while there are redundant parentheses, remove them
-    while hasOuterParens(arg):
+    while has_outer_parens(arg):
         arg = arg[1:-1]
     return arg
 
 # finds the main connective of an argument
-def mainConnective(arg):
-    arg = stripOuterParens(arg)
-    
-    connectives = ['->', '/\\', '\\/', '~', '|=|', '<>']
-    
-    if '(' not in arg:
-        for con in connectives:
-            if con in arg:
-                return con
+def main_connective(proposition):
+    proposition = strip_outer_parens(proposition)
+    proposition = proposition.replace(' ', '')
+
+    dual_connectives = ['->', '/\\', '\\/']
+    single_connectives = ['|=|', '<>', '~']
+
+    if '(' not in proposition:
+        for connective in dual_connectives:
+            if connective in proposition:
+                return connective
+        
+        if proposition[0:1] == '~':
+            return '~'
+        elif proposition[0:2] == '<>':
+            return '<>'
+        elif proposition[0:3] == '|=|':
+            return '|=|'
+        
         return ''
     
     else:
-        if arg[0] == '~':
-            while arg[0] == '~':
-                arg = arg[1:]
-            
-            argDupe = arg[1:] # duplicate argument to modify and remove initial '('
-            while not argDupe.count('(') == argDupe.count(')'):
-                argDupe = argDupe[1:]
-            
-            if argDupe == '':
-                return '~'
+        part_1 = ''
+        while not proposition[0] == '(':
+            part_1 += proposition[0]
+            proposition = proposition[1:]
         
-        elif arg[0:3] == '|=|':
-            while arg[0:3] == '|=|':
-                arg = arg[3:]
-            
-            argDupe = arg[1:]
-            while not argDupe.count('(') == argDupe.count(')'):
-                argDupe = argDupe[1:]
-            
-            if argDupe == '':
-                return '|=|'
-        
-        elif arg[0:2] == '<>':
-            while arg[0:2] == '<>':
-                arg = arg[2:]
-            
-            argDupe = arg[1:]
-            while not argDupe.count('(') == argDupe.count(')'):
-                argDupe = argDupe[1:]
-            
-            if argDupe == '':
-                return '<>'
+        # part_1 could be nothing if the first part is in parens
+        if part_1 == '':
+            part_1 = proposition[0]
+            proposition = proposition[1:]
 
-        while not arg[0:2] in connectives:
-            arg = arg[1:]
+            while not part_1.count(')') == part_1.count('('):
+                part_1 += proposition[0]
+                proposition = proposition[1:]
         
-        while not arg.count('(') == arg.count(')'):
-            arg = arg[1:]
-            while not arg[0:2] in connectives:
-                arg = arg[1:]
+        elif part_1 == '~':
+            part_1 = proposition[0]
+            proposition = proposition[1:]
+
+            while not part_1.count(')') == part_1.count('('):
+                part_1 += proposition[0]
+                proposition = proposition[1:]
+            
+            if proposition == '':
+                return '~'
+            else:
+                part_1 = remove_negation(part_1)
+                part_1 = strip_outer_parens(part_1)
         
-        return arg[0:2]
+        if part_1[-2:] in dual_connectives or part_1[-2:] == '<>':
+            return part_1[-2:]
+        elif part_1[-3:] == '|=|':
+            return part_1[-3:]
+        elif part_1[-1:] == '~':
+            return part_1[-1:]
+        
+        if proposition[0:2] in dual_connectives or proposition[0:2] == '<>':
+            return proposition[0:2]
+        elif proposition[0:3] == '|=|':
+            return proposition[0:3]
+        elif proposition[0:1] == '~':
+            return proposition[0:1]
 
 # adds negation to the front of an argument
-def addNeg(arg):
+def add_negation(arg):
     arg = normalize(arg)
 
     return '(~' + arg + ')'
 
 # removes negation from argument if it exists
 # otherwise just returns the argument
-def removeNeg(arg):
+def remove_negation(arg):
     arg = normalize(arg)
     
-    if not mainConnective(arg) == '~':
+    if not main_connective(arg) == '~':
         return arg
     else:
         return arg[2:-1]
@@ -99,10 +107,9 @@ def removeNeg(arg):
 # finds the part of the argument before the main connective
 # for example, firstPart('A \\/ B') returns 'A'
 def firstPart(arg):
-    arg = stripOuterParens(arg)
+    arg = strip_outer_parens(arg)
     
-    # store main connecitve of argument
-    con = mainConnective(arg)
+    con = main_connective(arg)
     
     # for single sentence connectivess, return nothing
     if con == '~' or con == '|=|' or con == '<>':
@@ -140,10 +147,9 @@ def firstPart(arg):
 # finds the part of the argument after the main connective
 # for example, secondPart('A \\/ B') returns 'B'
 def secondPart(arg):
-    arg = stripOuterParens(arg)
+    arg = strip_outer_parens(arg)
     
-    # store main connective of argument
-    con = mainConnective(arg)
+    con = main_connective(arg)
     
     # for single sentence symbol, return nothing
     if con == '':
@@ -201,12 +207,11 @@ def secondPart(arg):
 
 # normalizes argument to standard form
 def normalize(arg):
-    arg = stripOuterParens(arg)
+    arg = strip_outer_parens(arg)
 
-    mainCon = mainConnective(arg)
+    main_con = main_connective(arg)
 
-    # nothing needs to be done for single sentence symbol
-    if mainCon == '':
+    if main_con == '':
         return arg
     
     # store first and second parts of argument
@@ -216,12 +221,10 @@ def normalize(arg):
     p2 = normalize(secondPart(arg))
 
     # reassemble the pieces
-    # negation doesn't need any spacing
-    if mainCon == '~' or mainCon == '|=|' or mainCon == '<>':
-        arg = mainCon + p2
-    # otherwise add spaces in between pieces
+    if main_con in ['~', '|=|', '<>']:
+        arg = main_con + p2
     else:
-        arg = p1 + ' ' + mainCon + ' ' + p2
+        arg = p1 + ' ' + main_con + ' ' + p2
 
     # ensure argument is enclosed in outer parentheses
     if not (arg[0] == '(' and arg[-1] == ')'):
@@ -236,11 +239,28 @@ def normalize(arg):
     
     return arg
 
-def test_mainConnective():
-    props = ['|=|P', '<>P', '|=|P -> Q', '<>P -> Q']
-
-    for prop in props:
-        print(mainConnective(prop))
+def test_main_connective():
+    to_test = [
+        'A',
+        'A -> B',
+        'A /\\ B',
+        'A \\/ B',
+        '~A',
+        '(A -> B) /\\ C',
+        'C /\\ (A -> B)',
+        '((A -> B) /\\ (C -> D))',
+        '(A -> B) /\\ (C -> D)',
+        '(~A -> B) \\/ ~(A -> C \\/ D)',
+        '(A)',
+        '((A))',
+        '~~(p \\/ ~p)',
+        '((~p -> r) /\\ (~q -> r)) -> (~(p /\\ q) -> r)',
+        '(~(p /\\ q) -> r)',
+        '(~p -> r) /\\ (~q -> r)'
+    ]
+    
+    for proposition in to_test:
+        print(main_connective(proposition))
 
 def test_firstPart():
     props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
@@ -255,4 +275,4 @@ def test_secondPart():
         print(prop, secondPart(prop))
 
 if __name__ == '__main__':
-    test_secondPart()
+    test_main_connective()
