@@ -1,5 +1,5 @@
 class Model:
-    # requires: worlds is a list of strings
+    # requires: worlds is a list of names of worlds as strings
     #           access is a set of tuples of elements of worlds,
     #               which define an accessibility function on worlds
     #           variables is a dictionary consisting of pairs
