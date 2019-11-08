@@ -105,44 +105,56 @@ def remove_negation(arg):
         return arg[2:-1]
 
 # finds the part of the argument before the main connective
-# for example, firstPart('A \\/ B') returns 'A'
-def firstPart(arg):
-    arg = strip_outer_parens(arg)
-    
-    con = main_connective(arg)
-    
-    # for single sentence connectivess, return nothing
-    if con == '~' or con == '|=|' or con == '<>':
-        return ''
+# for example, first_part('A \\/ B') returns 'A'
+def first_part(proposition):
+    proposition = strip_outer_parens(proposition)
+    proposition = proposition.replace(' ', '')
 
-    # build first part of argument
-    # essentially just add the beginning of the
-    # string until the main connective is reached
-    p1 = ''
-    if '(' in arg:
-        # move beginning of arg to p1 until the main connective is reached
-        while not arg[0:2] == con:
-            p1 += arg[0]
-            arg = arg[1:]
-        
-        # if parentheses are unbalanced, keep going until they are
-        # balanced and the main connective is reached
-        while not p1.count('(') == p1.count(')'):
-            p1 += con
-            arg = arg[2:]
-            while not arg[0:2] == con:
-                p1 += arg[0]
-                arg = arg[1:]
-        
-        return normalize(p1)
+    dual_connectives = ['->', '/\\', '\\/']
+
+    main_con = main_connective(proposition)
+
+    if main_con == '':
+        return proposition
+    elif main_con == '~' or main_con == '<>' or main_con == '|=|':
+        return ''
     
-    # if no parentheses in the argument, just
-    # take everything before the main connective
+    part_1 = ''
+
+    if '(' not in proposition:
+        while not proposition[0:2] == main_con:
+            part_1 += proposition[0]
+            proposition = proposition[1:]
+    
     else:
-        while not arg[0:2] == con:
-            p1 += arg[0]
-            arg = arg[1:]
-        return normalize(p1)
+        part_1 = ''
+        while not proposition[0] == '(':
+            part_1 += proposition[0]
+            proposition = proposition[1:]
+        
+        # part_1 could be nothing if the first part is in parens
+        if part_1 == '':
+            part_1 = proposition[0]
+            proposition = proposition[1:]
+
+            while not part_1.count(')') == part_1.count('('):
+                part_1 += proposition[0]
+                proposition = proposition[1:]
+        
+        elif part_1 == '~':
+            part_1 += proposition[0]
+            proposition = proposition[1:]
+
+            while not part_1.count(')') == part_1.count('('):
+                part_1 += proposition[0]
+                proposition = proposition[1:]
+            
+            part_1 = strip_outer_parens(part_1)
+    
+    if part_1[-2:] in dual_connectives:
+        part_1 = part_1[0:-2]
+    
+    return part_1
 
 # finds the part of the argument after the main connective
 # for example, secondPart('A \\/ B') returns 'B'
@@ -217,7 +229,7 @@ def normalize(arg):
     # store first and second parts of argument
     # use recursion to normalize first and second parts
     # then combine everything back into one piece
-    p1 = normalize(firstPart(arg))
+    p1 = normalize(first_part(arg))
     p2 = normalize(secondPart(arg))
 
     # reassemble the pieces
@@ -262,11 +274,33 @@ def test_main_connective():
     for proposition in to_test:
         print(main_connective(proposition))
 
-def test_firstPart():
+def test_first_part():
+    to_test = [
+        'A',
+        'A -> B',
+        'A /\\ B',
+        'A \\/ B',
+        '~A',
+        '(A -> B) /\\ C',
+        'C /\\ (A -> B)',
+        '((A -> B) /\\ (C -> D))',
+        '(A -> B) /\\ (C -> D)',
+        '(~A -> B) \\/ ~(A -> C \\/ D)',
+        '(A)',
+        '((A))',
+        '~~(p \\/ ~p)',
+        '((~p -> r) /\\ (~q -> r)) -> (~(p /\\ q) -> r)',
+        '(~(p /\\ q) -> r)',
+        '(~p -> r) /\\ (~q -> r)'
+    ]
+    
+    for proposition in to_test:
+        print(first_part(proposition))
+    
     props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
 
     for prop in props:
-        print(prop, firstPart(prop))
+        print(first_part(prop))
 
 def test_secondPart():
     props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
@@ -275,4 +309,4 @@ def test_secondPart():
         print(prop, secondPart(prop))
 
 if __name__ == '__main__':
-    test_main_connective()
+    test_first_part()
