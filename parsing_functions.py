@@ -156,6 +156,56 @@ def first_part(proposition):
     
     return part_1
 
+def second_part(proposition):
+    proposition = strip_outer_parens(proposition)
+    proposition = proposition.replace(' ', '')
+
+    dual_connectives = ['->', '/\\', '\\/']
+
+    main_con = main_connective(proposition)
+
+    if main_con == '':
+        return proposition
+    elif main_con == '~' or main_con == '<>' or main_con == '|=|':
+        return ''
+    
+    part_1 = ''
+
+    if '(' not in proposition:
+        while not proposition[0:2] == main_con:
+            part_1 += proposition[0]
+            proposition = proposition[1:]
+    
+    else:
+        part_1 = ''
+        while not proposition[0] == '(':
+            part_1 += proposition[0]
+            proposition = proposition[1:]
+        
+        # part_1 could be nothing if the first part is in parens
+        if part_1 == '':
+            part_1 = proposition[0]
+            proposition = proposition[1:]
+
+            while not part_1.count(')') == part_1.count('('):
+                part_1 += proposition[0]
+                proposition = proposition[1:]
+        
+        elif part_1 == '~':
+            part_1 += proposition[0]
+            proposition = proposition[1:]
+
+            while not part_1.count(')') == part_1.count('('):
+                part_1 += proposition[0]
+                proposition = proposition[1:]
+            
+            part_1 = strip_outer_parens(part_1)
+    
+    if proposition[0:2] in dual_connectives:
+        proposition = proposition[2:]
+    
+    return proposition
+
 # finds the part of the argument after the main connective
 # for example, secondPart('A \\/ B') returns 'B'
 def secondPart(arg):
@@ -302,6 +352,29 @@ def test_first_part():
     for prop in props:
         print(first_part(prop))
 
+def test_second_part():
+    to_test = [
+        'A',
+        'A -> B',
+        'A /\\ B',
+        'A \\/ B',
+        '~A',
+        '(A -> B) /\\ C',
+        'C /\\ (A -> B)',
+        '((A -> B) /\\ (C -> D))',
+        '(A -> B) /\\ (C -> D)',
+        '(~A -> B) \\/ ~(A -> C \\/ D)',
+        '(A)',
+        '((A))',
+        '~~(p \\/ ~p)',
+        '((~p -> r) /\\ (~q -> r)) -> (~(p /\\ q) -> r)',
+        '(~(p /\\ q) -> r)',
+        '(~p -> r) /\\ (~q -> r)'
+    ]
+    
+    for proposition in to_test:
+        print(second_part(proposition))
+
 def test_secondPart():
     props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
 
@@ -309,4 +382,4 @@ def test_secondPart():
         print(prop, secondPart(prop))
 
 if __name__ == '__main__':
-    test_first_part()
+    test_second_part()
