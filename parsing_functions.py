@@ -154,7 +154,7 @@ def first_part(proposition):
     if part_1[-2:] in dual_connectives:
         part_1 = part_1[0:-2]
     
-    return part_1
+    return normalize(part_1)
 
 def second_part(proposition):
     proposition = strip_outer_parens(proposition)
@@ -166,8 +166,12 @@ def second_part(proposition):
 
     if main_con == '':
         return proposition
-    elif main_con == '~' or main_con == '<>' or main_con == '|=|':
-        return ''
+    elif main_con == '~':
+        return proposition[1:]
+    elif main_con == '<>':
+        return proposition[2:]
+    elif main_con == '|=|':
+        return proposition[3:]
     
     part_1 = ''
 
@@ -204,68 +208,7 @@ def second_part(proposition):
     if proposition[0:2] in dual_connectives:
         proposition = proposition[2:]
     
-    return proposition
-
-# finds the part of the argument after the main connective
-# for example, secondPart('A \\/ B') returns 'B'
-def secondPart(arg):
-    arg = strip_outer_parens(arg)
-    
-    con = main_connective(arg)
-    
-    # for single sentence symbol, return nothing
-    if con == '':
-        return ''
-
-    # build second part of argument
-    # essentially just add the end of the string
-    # until the main connective is reached
-    p2 = ''
-    if '(' in arg:
-        # handle |=| separately because it's longer than all the others
-        if con == '|=|':
-            while not arg[-2:] == con:
-                p2 = arg[-1] + p2
-                arg = arg[:-1]
-            
-            while not p2.count('(') == p2.count(')'):
-                p2 = con + p2
-                arg = arg[:-2]
-                while not arg[-3:] == con:
-                    p2 = arg[-1] + p2
-                    arg = arg[:-1]
-            
-            return normalize(p2)
-
-        # move end of arg to p2 until the main connective is reached
-        while not arg[-2:] == con:
-            p2 = arg[-1] + p2
-            arg = arg[:-1]
-        
-        # if parentheses are unbalanced, keep going until they are
-        # balanced and the main connective is reached
-        while not p2.count('(') == p2.count(')'):
-            p2 = con + p2
-            arg = arg[:-2]
-            while not arg[-2:] == con:
-                p2 = arg[-1] + p2
-                arg = arg[:-1]
-        
-        return normalize(p2)
-    
-    # if no parentheses in the argument, just
-    # take everything after the main connective
-    else:
-        if con == '|=|':
-            while not arg[-3:] == con:
-                p2 = arg[-1] + p2
-                arg = arg[:-1]
-            return normalize(p2)
-        
-        while not arg[-2:] == con:
-            p2 = arg[-1] + p2
-            arg = arg[:-1]
-        return normalize(p2)
+    return normalize(proposition)
 
 # normalizes argument to standard form
 def normalize(arg):
@@ -371,9 +314,27 @@ def test_second_part():
         '(~(p /\\ q) -> r)',
         '(~p -> r) /\\ (~q -> r)'
     ]
+    correct_answers = [
+        'A',
+        'B',
+        'B',
+        'B',
+        'A',
+        'C',
+        'A -> B',
+        'C -> D',
+        'C -> D',
+        '~(A -> C \\/ D)',
+        'A',
+        'A',
+        '~(p \\/ ~p)',
+        '~(p /\\ q) -> r',
+        'r',
+        '~q -> r'
+    ]
     
-    for proposition in to_test:
-        print(second_part(proposition))
+    for i in range(len(to_test)):
+        print(correct_answers[i], ':', second_part(to_test[i]))
 
 def test_secondPart():
     props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
