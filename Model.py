@@ -1,32 +1,41 @@
 class Model:
-    # requires: worlds is a list of names of worlds as strings
-    #           access is a set of tuples of elements of worlds,
-    #               which define an accessibility function on worlds
-    #           variables is a dictionary consisting of pairs
-    #               proposition:[worlds at which proposition is true]
-    def __init__(self, worlds=[], access=[], variables={}):
-        self.worlds    = worlds
-        self.access    = access
-        self.variables = variables
-
-    def valuation(self, variable, world):
-        if variable not in self.variables:
-            return False
-        if world in self.variables[variable]:
-            return True
-        return False
+    # worlds should be a dictionary with entries:
+    #   * 'access', corresponding to a list of accessible worlds
+    #   * 'variables', corresponding to a list of variables that are true at the world
+    def __init__(self, worlds={}):
+        self.worlds = worlds
+    
+    def add_world(self, world_name, accessible_worlds, true_variables):
+        self.worlds[world_name] = {'access' : accessible_worlds, 'variables' : true_variables}
     
     def __str__(self):
-        return ''.join(['Worlds: ', str(self.worlds), '\nAccessibility Relations: ', str(self.access), 'Valuations: ', str(self.variables)])
+        string_rep = ''
+        for world in self.worlds:
+            string_rep += world + ':\n  '
+
+            string_rep += 'accessible worlds:'
+            for accessible_world in self.worlds[world]['access']:
+                string_rep += '\n    * ' + accessible_world
+            string_rep += '\n  '
+
+            string_rep += 'true variables:'
+            for variable in self.worlds[world]['variables']:
+                string_rep += '\n    * ' + variable
+            string_rep += '\n'
+        
+        return string_rep
 
 def test_Model():
-    worlds = ['w1', 'w2', 'w3', 'w4']
-    access = [('w1', 'w2'), ('w2', 'w3'), ('w2', 'w2'), ('w1', 'w4')]
-    variables = {'a':['w1', 'w3'], 'b':['w1', 'w2'], 'c':['w3', 'w4']}
-
-    mod = Model(worlds, access, variables)
-    print(mod)
-    print('Model valuation of a at w2:', str(mod.valuation('a', 'w2')))
+    model = Model({
+        'w1' : {
+            'access' : ['w2'], 'variables' : ['t', 'x', 'v']
+        },
+        'w2' : {
+            'access' : ['w1', 'w2'], 'variables' : ['x', 'y', 't']
+        }
+    })
+    model.add_world('w3', ['w1', 'w2', 'w3'], ['x', 'y', 'z'])
+    print(model)
 
 if __name__ == '__main__':
     test_Model()
