@@ -223,7 +223,7 @@ def normalize(arg):
     # use recursion to normalize first and second parts
     # then combine everything back into one piece
     p1 = normalize(first_part(arg))
-    p2 = normalize(secondPart(arg))
+    p2 = normalize(second_part(arg))
 
     # reassemble the pieces
     if main_con in ['~', '|=|', '<>']:
