@@ -24,7 +24,7 @@ def check_proposition(proposition, world, model):
     
     # logic for diamond
     elif main_con == '<>':
-        for accessible_world in model.worlds['access']:
+        for accessible_world in model.worlds[world]['access']:
             if check_proposition(part_2, accessible_world, model):
                 return True
         
@@ -32,7 +32,7 @@ def check_proposition(proposition, world, model):
     
     # logic for box
     elif main_con == '|=|':
-        for accessible_world in model.worlds['access']:
+        for accessible_world in model.worlds[world]['access']:
             if not check_proposition(part_2, accessible_world, model):
                 return False
         
@@ -40,7 +40,17 @@ def check_proposition(proposition, world, model):
     
     # logic for single variables
     elif main_con == '':
-        if proposition in model.worlds['variables']:
+        if proposition in model.worlds[world]['variables']:
             return True
         return False
 
+def test_check_proposition():
+    model = Model()
+    model.add_world('x', ['x', 'y'], ['a'])
+    model.add_world('y', [], [])
+    print(model)
+
+    print(check_proposition('<>a', 'x', model))
+
+if __name__ == '__main__':
+    test_check_proposition()
