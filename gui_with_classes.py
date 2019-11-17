@@ -85,11 +85,10 @@ class World:
         def draw_arrow(event):
             for world in worlds:
                 if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2:
-                    print(world.name)
                     self.master.create_line(x, y, event.x, event.y, arrow=LAST)
                     if world.name not in model.worlds[self.name]['access']:
-                        model.worlds[self.name]['access'].append(world.name)
-                    # print(model)
+                        model.add_access(self.name, world.name)
+            
             self.master.unbind('<ButtonRelease-1>')
         
         canvas.bind('<ButtonRelease-1>', draw_arrow)
@@ -124,7 +123,7 @@ def update_world_selection():
 
 if __name__ == '__main__':
     root = Tk()
-    canvas = Canvas(root, width=750, height=1000, bg=BACKGROUND)
+    canvas = Canvas(root, width=600, height=800, bg=BACKGROUND)
     canvas.pack()
 
     worlds = []
