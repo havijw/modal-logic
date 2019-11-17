@@ -5,8 +5,13 @@ class Model:
     def __init__(self, worlds={}):
         self.worlds = worlds
     
-    def add_world(self, world_name, accessible_worlds, true_variables):
-        self.worlds[world_name] = {'access' : accessible_worlds, 'variables' : true_variables}
+    def add_world(self, world_name, accessible_worlds=[], true_variables=[]):
+        if not world_name in self.worlds:
+            self.worlds[world_name] = {'access' : accessible_worlds, 'variables' : true_variables}
+    
+    def remove_world(self, world_name):
+        if world_name in self.worlds:
+            self.worlds.pop(world_name)
     
     def __str__(self):
         string_rep = ''
@@ -35,6 +40,8 @@ def test_Model():
         }
     })
     model.add_world('w3', ['w1', 'w2', 'w3'], ['x', 'y', 'z'])
+    model.add_world('w4', ['w1'], ['x', 'y'])
+    model.worlds['w4']['access'].append('w2')
     print(model)
 
 if __name__ == '__main__':
