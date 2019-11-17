@@ -97,6 +97,21 @@ class World:
         def draw_arrow(event):
             for world in worlds:
                 if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2:
+                    if distance(x, y, world.x, world.y) <= RADIUS * 2:
+                        self.master.create_arc(
+                            world.x - 40,
+                            world.y,
+                            world.x + 40,
+                            world.y - 100,
+                            start=340, extent=220, style='arc'
+                        )
+                        self.master.create_line(
+                            world.x - 35,
+                            world.y - 29,
+                            world.x - 34,
+                            world.y - 27,
+                            arrow=LAST
+                        )
                     self.master.create_line(x, y, event.x, event.y, arrow=LAST)
                     if world.name not in model.worlds[self.name]['access']:
                         model.add_access(self.name, world.name)
@@ -116,21 +131,11 @@ def create_world(event):
     world = World(canvas, event.x, event.y)
     worlds.append(world)
 
-def start_draw_arrow(event):
-    x = event.x
-    y = event.y
-
-    def draw_arrow(event):
-        for world in worlds:
-            if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2:
-                canvas.create_line(x, y, event.x, event.y, arrow=LAST)
-        canvas.unbind('<ButtonRelease-1>')
-    
-    canvas.bind('<ButtonRelease-1>', draw_arrow)
-
 def update_world_selection():
     world_options = list(model.worlds.keys())
     world_options.sort()
+    if world_options == []:
+        world_options = ['']
     world_selection = OptionMenu(canvas, menu_message, *world_options)
     world_selection.place(relx=0, rely=0.95, relwidth=0.1, relheight=0.05)
 
