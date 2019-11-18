@@ -166,6 +166,16 @@ def check_current_proposition():
     else:
         canvas.configure(bg='#ff4d4d')
 
+def check_current_proposition_event(event):
+    proposition = proposition_entry.get()
+    world = menu_message.get()
+    value = check_proposition(proposition, world, model)
+
+    if value:
+        canvas.configure(bg='#7aff81')
+    else:
+        canvas.configure(bg='#ff4d4d')
+
 if __name__ == '__main__':
     root = tk.Tk()
     root.configure(width=1200, height=800)
@@ -183,6 +193,7 @@ if __name__ == '__main__':
 
     proposition_entry = tk.Entry(canvas)
     proposition_entry.place(relx=0.1, rely=0.95, relwidth=0.8, relheight=0.05)
+    proposition_entry.bind('<Return>', check_current_proposition_event)
 
     check_proposition_button = tk.Button(canvas, text='Check', command=check_current_proposition)
     check_proposition_button.place(relx=0.9, rely=0.95, relwidth=0.1, relheight=0.05)
