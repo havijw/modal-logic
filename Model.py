@@ -14,6 +14,9 @@ class Model:
     def remove_world(self, world_name):
         if world_name in self.worlds:
             self.worlds.pop(world_name)
+            for world in self.worlds:
+                if world_name in self.worlds[world]['access']:
+                    self.worlds[world]['access'].remove(world_name)
     
     def add_access(self, world, world_to_access):
         if world in self.worlds:
