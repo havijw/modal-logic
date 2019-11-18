@@ -1,8 +1,6 @@
-from tkinter import *
-from parsing_functions import *
+import tkinter as tk
 from proposition_checker import check_proposition
 from Model import Model
-from math import sin, cos
 
 RADIUS = 50
 BACKGROUND = '#363636'
@@ -17,13 +15,13 @@ class World:
         self.master = master
         self.outline = master.create_oval(x - RADIUS, y - RADIUS, x + RADIUS, y + RADIUS, fill='#399ced', tag=self.outline_tag)
 
-        self.variables_entry = Entry(master)
+        self.variables_entry = tk.Entry(master)
         self.variables_entry.place(x=x - 35, width=70, y=y - 20, height=20)
         self.variables_entry.insert(0, 'True Vars')
         self.variables_entry.bind('<Button 1>', self.clear_variables_entry)
         self.variables_entry.bind('<Key>', self.update_variables)
 
-        self.name_entry = Entry(master)
+        self.name_entry = tk.Entry(master)
         self.name_entry.place(x=x - 35, width=70, y=y + 10, height=20)
         self.name_entry.insert(0, 'Name')
         self.name_entry.bind('<Button 1>', self.clear_name_entry)
@@ -33,7 +31,7 @@ class World:
         update_world_selection()
         self.name_entry.bind('<Key>', self.update_name)
 
-        self.delete_button = Button(master, text='x', command=self.delete)
+        self.delete_button = tk.Button(master, text='x', command=self.delete)
         self.delete_button.place(x=x - 5, y=y - RADIUS - 5, width=10, height=10)
 
         self.arrows = {}
@@ -124,14 +122,13 @@ class World:
                             world.y - 29,
                             world.x - 34,
                             world.y - 27,
-                            arrow=LAST
+                            arrow=tk.LAST
                         )
                         self.arrows[arc_to_self] = (-1, -1)
                         self.arrows[arrow_tip]   = (-1, -1)
                     else:
-                        new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=LAST)
+                        new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=tk.LAST)
                         self.arrows[new_arrow] = (world.x, world.y)
-                        print('arrow to ' + world.name)
                     
                     if world.name not in model.worlds[self.name]['access']:
                         model.add_access(self.name, world.name)
@@ -156,7 +153,7 @@ def update_world_selection():
     world_options.sort()
     if world_options == []:
         world_options = ['']
-    world_selection = OptionMenu(canvas, menu_message, *world_options)
+    world_selection = tk.OptionMenu(canvas, menu_message, *world_options)
     world_selection.place(relx=0, rely=0.95, relwidth=0.1, relheight=0.05)
 
 def check_current_proposition():
@@ -170,24 +167,24 @@ def check_current_proposition():
         canvas.configure(bg='#ff4d4d')
 
 if __name__ == '__main__':
-    root = Tk()
-    root.configure(width=600, height=800)
-    canvas = Canvas(root, bg=BACKGROUND)
+    root = tk.Tk()
+    root.configure(width=1200, height=800)
+    canvas = tk.Canvas(root, bg=BACKGROUND)
     canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     worlds = []
     model = Model()
     canvas.bind('<Button 1>', create_world)
 
-    menu_message = StringVar(root)
+    menu_message = tk.StringVar(root)
     menu_message.set('select world')
-    world_selection = OptionMenu(canvas, menu_message, list(model.worlds.keys()))
+    world_selection = tk.OptionMenu(canvas, menu_message, list(model.worlds.keys()))
     world_selection.place(relx=0, rely=0.95, relwidth=0.1, relheight=0.05)
 
-    proposition_entry = Entry(canvas)
+    proposition_entry = tk.Entry(canvas)
     proposition_entry.place(relx=0.1, rely=0.95, relwidth=0.8, relheight=0.05)
 
-    check_proposition_button = Button(canvas, text='Check', command=check_current_proposition)
+    check_proposition_button = tk.Button(canvas, text='Check', command=check_current_proposition)
     check_proposition_button.place(relx=0.9, rely=0.95, relwidth=0.1, relheight=0.05)
 
     root.mainloop()

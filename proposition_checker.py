@@ -1,4 +1,4 @@
-from parsing_functions import *
+from parsing_functions import normalize, first_part, second_part, main_connective
 from Model import Model
 
 def check_proposition(proposition, world, model):
