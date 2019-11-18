@@ -36,7 +36,7 @@ class World:
         self.delete_button = Button(master, text='x', command=self.delete)
         self.delete_button.place(x=x - 5, y=y - RADIUS - 5, width=10, height=10)
 
-        self.arrows = []
+        self.arrows = {}
         self.master.tag_bind(self.outline_tag, '<Enter>', self.bind_B1_Motion_to_start_draw_arrow)
         self.master.tag_bind(self.outline_tag, '<Leave>', self.unbind_B1_Motion)
     
@@ -57,6 +57,14 @@ class World:
         model.remove_world(self.name)
         for arrow in self.arrows:
             self.master.delete(arrow)
+        
+        for world in worlds:
+            to_delete = []
+            for arrow in world.arrows:
+                if world.arrows[arrow][0] == self.x and world.arrows[arrow][1] == self.y:
+                    self.master.delete(arrow)
+                    to_delete.append(arrow)
+            world.arrows = {key:world.arrows[key] for key in world.arrows if key not in to_delete}
         update_world_selection()
     
     def update_name(self, event):
@@ -118,10 +126,12 @@ class World:
                             world.y - 27,
                             arrow=LAST
                         )
-                        self.arrows.extend([arc_to_self, arrow_tip])
+                        self.arrows[arc_to_self] = (-1, -1)
+                        self.arrows[arrow_tip]   = (-1, -1)
                     else:
                         new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=LAST)
-                        self.arrows.append(new_arrow)
+                        self.arrows[new_arrow] = (world.x, world.y)
+                        print('arrow to ' + world.name)
                     
                     if world.name not in model.worlds[self.name]['access']:
                         model.add_access(self.name, world.name)
@@ -168,7 +178,6 @@ if __name__ == '__main__':
     worlds = []
     model = Model()
     canvas.bind('<Button 1>', create_world)
-    arrows = []
 
     menu_message = StringVar(root)
     menu_message.set('select world')
