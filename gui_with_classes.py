@@ -108,37 +108,55 @@ class World:
 
         def draw_arrow(event):
             for world in worlds:
-                if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2:
+                if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2 and world.name not in model.worlds[self.name]['access']:
                     if distance(x, y, world.x, world.y) <= RADIUS * 2:
                         arc_to_self = self.master.create_arc(
                             world.x - 40,
                             world.y,
                             world.x + 40,
                             world.y - 100,
-                            start=340, extent=220, style='arc'
+                            start=340, extent=220, style='arc', width=3
                         )
                         arrow_tip = self.master.create_line(
                             world.x - 35,
                             world.y - 29,
                             world.x - 34,
                             world.y - 27,
-                            arrow=tk.LAST
+                            arrow=tk.LAST, width=3
                         )
                         self.arrows[arc_to_self] = (-1, -1)
                         self.arrows[arrow_tip]   = (-1, -1)
                     else:
-                        new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=tk.LAST)
+                        arrow_name = '(' + str(x) + ', ' + str(y) + ') arrow to (' + str(event.x) + ', ' + str(event.y) + ')'
+                        new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=tk.LAST, width=3, tags=arrow_name)
                         self.arrows[new_arrow] = (world.x, world.y)
+                        self.master.tag_bind(new_arrow, '<Button 1>', lambda event, name = new_arrow: self.delete_arrow(name))
                     
-                    if world.name not in model.worlds[self.name]['access']:
-                        model.add_access(self.name, world.name)
+                    model.add_access(self.name, world.name)
             
             self.master.unbind('<ButtonRelease-1>')
         
         canvas.bind('<ButtonRelease-1>', draw_arrow)
+    
+    def delete_arrow(self, arrow):
+        self.master.delete(arrow)
+        for world in worlds:
+            if world.x == self.arrows[arrow][0] and world.y == self.arrows[arrow][1]:
+                model.remove_access(self.name, world.name)
 
 def distance(x1, y1, x2, y2):
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+def toggle_world_addition():
+    global can_add_worlds
+    if can_add_worlds:
+        can_add_worlds = False
+        canvas.unbind('<Button 1>')
+        world_add_button.configure(text='Enable world adding')
+    else:
+        can_add_worlds = True
+        canvas.bind('<Button 1>', create_world)
+        world_add_button.configure(text='Disable world adding')
 
 def create_world(event):
     for world in worlds:
@@ -179,8 +197,12 @@ def check_current_proposition_event(event):
 if __name__ == '__main__':
     root = tk.Tk()
     root.configure(width=1200, height=800)
-    canvas = tk.Canvas(root, bg=BACKGROUND)
+    canvas = tk.Canvas(root, bg=BACKGROUND, bd=0)
     canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+    can_add_worlds = True
+    world_add_button = tk.Button(canvas, text='Disable World Adding', command=toggle_world_addition, borderwidth=0)
+    world_add_button.place(x=0, y=0, height=20, width=250)
 
     worlds = []
     model = Model()
