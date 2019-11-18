@@ -70,7 +70,11 @@ class World:
                 self.name = self.name[:-2] + str(i) + '_'
         
         model.add_world(self.name, model.worlds[old_name]['access'], model.worlds[old_name]['variables'])
+        for world in model.worlds:
+            if old_name in model.worlds[world]['access']:
+                model.add_access(world, self.name)
         model.remove_world(old_name)
+        print(model)
         update_world_selection()
     
     def update_variables(self, event):
@@ -140,7 +144,6 @@ def update_world_selection():
     world_selection.place(relx=0, rely=0.95, relwidth=0.1, relheight=0.05)
 
 def check_current_proposition():
-    print(model)
     proposition = proposition_entry.get()
     world = menu_message.get()
     value = check_proposition(proposition, world, model)
