@@ -22,6 +22,10 @@ class Model:
         if world in self.worlds:
             self.worlds[world]['access'].append(world_to_access)
     
+    def remove_access(self, world, world_to_remove_access):
+        if world_to_remove_access in self.worlds[world]['access']:
+            self.worlds[world]['access'].remove(world_to_remove_access)
+    
     def __str__(self):
         string_rep = ''
         for world in self.worlds:
