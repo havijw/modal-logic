@@ -36,6 +36,7 @@ class World:
         self.delete_button = Button(master, text='x', command=self.delete)
         self.delete_button.place(x=x - 5, y=y - RADIUS - 5, width=10, height=10)
 
+        self.arrows = []
         self.master.tag_bind(self.outline_tag, '<Enter>', self.bind_B1_Motion_to_start_draw_arrow)
         self.master.tag_bind(self.outline_tag, '<Leave>', self.unbind_B1_Motion)
     
@@ -54,6 +55,8 @@ class World:
         self.delete_button.destroy()
         worlds.remove(self)
         model.remove_world(self.name)
+        for arrow in self.arrows:
+            self.master.delete(arrow)
         update_world_selection()
     
     def update_name(self, event):
@@ -74,7 +77,6 @@ class World:
             if old_name in model.worlds[world]['access']:
                 model.add_access(world, self.name)
         model.remove_world(old_name)
-        print(model)
         update_world_selection()
     
     def update_variables(self, event):
@@ -102,21 +104,25 @@ class World:
             for world in worlds:
                 if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2:
                     if distance(x, y, world.x, world.y) <= RADIUS * 2:
-                        self.master.create_arc(
+                        arc_to_self = self.master.create_arc(
                             world.x - 40,
                             world.y,
                             world.x + 40,
                             world.y - 100,
                             start=340, extent=220, style='arc'
                         )
-                        self.master.create_line(
+                        arrow_tip = self.master.create_line(
                             world.x - 35,
                             world.y - 29,
                             world.x - 34,
                             world.y - 27,
                             arrow=LAST
                         )
-                    self.master.create_line(x, y, event.x, event.y, arrow=LAST)
+                        self.arrows.extend([arc_to_self, arrow_tip])
+                    else:
+                        new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=LAST)
+                        self.arrows.append(new_arrow)
+                    
                     if world.name not in model.worlds[self.name]['access']:
                         model.add_access(self.name, world.name)
             
@@ -162,6 +168,7 @@ if __name__ == '__main__':
     worlds = []
     model = Model()
     canvas.bind('<Button 1>', create_world)
+    arrows = []
 
     menu_message = StringVar(root)
     menu_message.set('select world')
