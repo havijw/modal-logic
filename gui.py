@@ -1,9 +1,11 @@
 import tkinter as tk
+from tkinter import font
 from proposition_checker import check_proposition
 from Model import Model
 
 RADIUS = 50
 BACKGROUND = '#363636'
+
 
 class World:
     def __init__(self, master, x, y):
@@ -32,7 +34,8 @@ class World:
         self.name_entry.bind('<Key>', self.update_name)
 
         self.delete_button = tk.Button(master, text='x', command=self.delete)
-        self.delete_button.place(x=x - 5, y=y - RADIUS - 5, width=10, height=10)
+        self.delete_button['font'] = delete_button_font
+        self.delete_button.place(x=x - 12, y=y - RADIUS - 4, width=24, height=20)
 
         self.arrows = {}
         self.master.tag_bind(self.outline_tag, '<Enter>', self.bind_B1_Motion_to_start_draw_arrow)
@@ -108,8 +111,8 @@ class World:
 
         def draw_arrow(event):
             for world in worlds:
-                if distance(event.x, event.y, world.x, world.y) <= RADIUS * 2 and world.name not in model.worlds[self.name]['access']:
-                    if distance(x, y, world.x, world.y) <= RADIUS * 2:
+                if distance(event.x, event.y, world.x, world.y) <= RADIUS and world.name not in model.worlds[self.name]['access']:
+                    if distance(x, y, world.x, world.y) <= RADIUS:
                         arc_to_self = self.master.create_arc(
                             world.x - 40,
                             world.y,
@@ -197,6 +200,7 @@ def check_current_proposition_event(event):
 if __name__ == '__main__':
     root = tk.Tk()
     root.configure(width=1200, height=800)
+    delete_button_font = tk.font.Font(family='Helvetica', size=10, weight='normal')
     canvas = tk.Canvas(root, bg=BACKGROUND, bd=0)
     canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
 
