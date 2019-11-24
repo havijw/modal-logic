@@ -60,7 +60,8 @@ def main_connective(proposition):
                 part_1 += proposition[0]
                 proposition = proposition[1:]
         
-        elif part_1 == '~':
+        elif part_1 in single_connectives:
+            connective = part_1
             part_1 = proposition[0]
             proposition = proposition[1:]
 
@@ -69,7 +70,7 @@ def main_connective(proposition):
                 proposition = proposition[1:]
             
             if proposition == '':
-                return '~'
+                return connective
             else:
                 part_1 = remove_negation(part_1)
                 part_1 = strip_outer_parens(part_1)
@@ -111,6 +112,7 @@ def first_part(proposition):
     proposition = proposition.replace(' ', '')
 
     dual_connectives = ['->', '/\\', '\\/']
+    single_connectives = ['|=|', '<>', '~']
 
     main_con = main_connective(proposition)
 
@@ -141,7 +143,7 @@ def first_part(proposition):
                 part_1 += proposition[0]
                 proposition = proposition[1:]
         
-        elif part_1 == '~':
+        elif part_1 in single_connectives:
             part_1 += proposition[0]
             proposition = proposition[1:]
 
@@ -161,6 +163,7 @@ def second_part(proposition):
     proposition = proposition.replace(' ', '')
 
     dual_connectives = ['->', '/\\', '\\/']
+    single_connectives = ['|=|', '<>', '~']
 
     main_con = main_connective(proposition)
 
@@ -195,7 +198,7 @@ def second_part(proposition):
                 part_1 += proposition[0]
                 proposition = proposition[1:]
         
-        elif part_1 == '~':
+        elif part_1 in single_connectives:
             part_1 += proposition[0]
             proposition = proposition[1:]
 
@@ -263,9 +266,13 @@ def test_main_connective():
         '(~(p /\\ q) -> r)',
         '(~p -> r) /\\ (~q -> r)'
     ]
+
+    proposition = '|=|(A -> B) -> (|=|A -> |=|B)'
+    print(main_connective(proposition))
+    print(first_part(proposition))
     
-    for proposition in to_test:
-        print(main_connective(proposition))
+    # for proposition in to_test:
+        # print(main_connective(proposition))
 
 def test_first_part():
     to_test = [
@@ -336,11 +343,5 @@ def test_second_part():
     for i in range(len(to_test)):
         print(correct_answers[i], ':', second_part(to_test[i]))
 
-def test_secondPart():
-    props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
-
-    for prop in props:
-        print(prop, secondPart(prop))
-
 if __name__ == '__main__':
-    test_second_part()
+    test_main_connective()
