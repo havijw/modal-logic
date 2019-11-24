@@ -78,117 +78,6 @@ def is_reducible(model):
     
     return False
 
-def reduce_propositions(model, logic):
-    while is_reducible(model):
-        worlds_to_add = {}
-        for world in model.worlds:
-            propositions_to_add = {}
-            propositions_to_remove = []
-            for proposition in copy(model.worlds[world]['propositions']):
-                main_con = main_connective(proposition)
-
-                if main_con == '~':
-                    if second_part(proposition) in model.worlds[world]['propositions']:
-                        if model.worlds[world]['propositions'][second_part(proposition)] == model.worlds[world]['propositions'][proposition]:
-                            return 'closed'
-                    elif second_part(proposition) in propositions_to_add:
-                        if propositions_to_add[second_part(proposition)] == model.worlds[world]['propositions'][proposition]:
-                            return 'closed'
-
-                    propositions_to_add[second_part(proposition)] = not model.worlds[world]['propositions'][proposition]
-                    propositions_to_remove.append(proposition)
-                
-                elif main_con == '/\\' and model.worlds[world]['propositions'][proposition]:
-                    if first_part(proposition) in model.worlds[world]['propositions']:
-                        if not model.worlds[world]['propositions'][first_part(proposition)]:
-                            return 'closed'
-                    elif first_part(proposition) in propositions_to_add:
-                        if not propositions_to_add[first_part(proposition)]:
-                            return 'closed'
-                    propositions_to_add[first_part(proposition)]  = True
-
-                    if second_part(proposition) in model.worlds[world]['propositions']:
-                        if not model.worlds[world]['propositions'][second_part(proposition)]:
-                            return 'closed'
-                    elif second_part(proposition) in propositions_to_add:
-                        if not propositions_to_add[second_part(proposition)]:
-                            return 'closed'
-                    propositions_to_add[second_part(proposition)] = True
-
-                    propositions_to_remove.append(proposition)
-                
-                elif main_con == '\\/' and not model.worlds[world]['propositions'][proposition]:
-                    if first_part(proposition) in model.worlds[world]['propositions']:
-                        if model.worlds[world]['propositions'][first_part(proposition)]:
-                            return 'closed'
-                    elif first_part(proposition) in propositions_to_add:
-                        if propositions_to_add[first_part(proposition)]:
-                            return 'closed'
-                    propositions_to_add[first_part(proposition)]  = False
-
-                    if second_part(proposition) in model.worlds[world]['propositions']:
-                        if model.worlds[world]['propositions'][second_part(proposition)]:
-                            return 'closed'
-                    elif second_part(proposition) in propositions_to_add:
-                        if propositions_to_add[second_part(proposition)]:
-                            return 'closed'
-                    propositions_to_add[second_part(proposition)] = False
-
-                    propositions_to_remove.append(proposition)
-                
-                elif main_con == '->' and not model.worlds[world]['propositions'][proposition]:
-                    if first_part(proposition) in model.worlds[world]['propositions']:
-                        if not model.worlds[world]['propositions'][first_part(proposition)]:
-                            return 'closed'
-                    elif first_part(proposition) in propositions_to_add:
-                        if not propositions_to_add[first_part(proposition)]:
-                            return 'closed'
-                    propositions_to_add[first_part(proposition)]  = True
-
-                    if second_part(proposition) in model.worlds[world]['propositions']:
-                        if model.worlds[world]['propositions'][second_part(proposition)]:
-                            return 'closed'
-                    elif second_part(proposition) in propositions_to_add:
-                        if propositions_to_add[second_part(proposition)]:
-                            return 'closed'
-                    propositions_to_add[second_part(proposition)] = False
-
-                    propositions_to_remove.append(proposition)
-                
-                elif main_con == '|=|' and not model.worlds[world]['propositions'][proposition]:
-                    new_world_index = 1
-                    while (world + '.' + str(new_world_index) in model.worlds[world]['access'] or
-                           world + '.' + str(new_world_index) in worlds_to_add):
-                        new_world_index += 1
-                    
-                    new_world_name = world + '.' + str(new_world_index)
-                    worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : False}}
-                    model.add_access(world, new_world_name)
-
-                    propositions_to_remove.append(proposition)
-                
-                elif main_con == '<>' and model.worlds[world]['propositions'][proposition]:
-                    new_world_index = 1
-                    while (world + '.' + str(new_world_index) in model.worlds[world]['access'] or
-                           world + '.' + str(new_world_index) in worlds_to_add):
-                        new_world_index += 1
-                    
-                    new_world_name = world + '.' + str(new_world_index)
-                    worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : True}}
-                    model.add_access(world, new_world_name)
-
-                    propositions_to_remove.append(proposition)
-            
-            for proposition in propositions_to_remove:
-                model.worlds[world]['propositions'].pop(proposition)
-
-            model.worlds[world]['propositions'].update(propositions_to_add)
-        
-        for world in worlds_to_add:
-            model.add_world(world, worlds_to_add[world]['access'], worlds_to_add[world]['variables'], worlds_to_add[world]['propositions'])
-        print(model)
-    # return model
-
 def complete_tableau(model, logic='K'):
     while is_reducible(model):
         worlds_to_add = {}
@@ -297,7 +186,6 @@ def complete_tableau(model, logic='K'):
         
         for world in worlds_to_add:
             model.add_world(world, worlds_to_add[world]['access'], worlds_to_add[world]['variables'], worlds_to_add[world]['propositions'])
-        print(model)
     
     # check for pure variables in model's propositions
     for world in model.worlds:
@@ -376,20 +264,32 @@ def test_reduce_propositions():
     print(model)
 
 def test_complete_tableau():
-    proposition = 'p \\/ q'
+    examples = [
+        'p \\/ ~p',
+        '~(p /\\ ~p)',
+        'p -> p',
+        'p -> (p \\/ p)',
+        'p -> (p /\\ p)',
+        '(p /\\ q) -> p',
+        '(p /\\ (p -> q)) -> q',
+        'p -> (p \\/ q)',
+        'p \\/ q -> q \\/ p',
+        'p /\\ q -> q /\\ p',
+        '(p -> q) -> ((p \\/ r) -> (q \\/ r))',
+        'p -> q'
+
     logic = 'K'
 
-    model = initialize_tableau(proposition, logic)
-    print(model)
-    model.worlds['1']['variables']['p'] = True
-    model.worlds['1']['variables']['q'] = True
+    for proposition in examples:
+        print('proposition : %s' % proposition)
+        model = initialize_tableau(proposition, logic)
+        result = complete_tableau(model, logic)
+        print(result)
 
-    evaluation = complete_tableau(model, logic)
-    print(model)
+        if result == 'open':
+            print('A problem occurred')
 
-    print(evaluation)
-
-if __name__ == '__main__':
+def main():
     logic = get_logic()
     proposition = get_proposition()
 
@@ -402,3 +302,6 @@ if __name__ == '__main__':
         print('Proposition is not a theorem of %s' % logic)
     else:
         print('Something went wrong when processing your proposition. My deepest apologies')
+
+if __name__ == '__main__':
+    test_complete_tableau()
