@@ -9,6 +9,9 @@ class Proof_Model(Model):
                 'propositions' : propositions
             }
     
+    def add_access(self, world, world_to_access):
+        self.worlds[world]['access'].append(world_to_access)
+    
     def __str__(self):
         string_rep = ''
         for world in self.worlds:
