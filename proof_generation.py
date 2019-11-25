@@ -7,7 +7,7 @@ from parsing_functions import (
     strip_outer_parens
 )
 from Proof_Model import Proof_Model
-from copy import copy
+from copy import copy, deepcopy
 
 def get_logic():
     print('Which modal logic would you like to work in?',
@@ -46,7 +46,7 @@ def get_proposition():
 
 def initialize_tableau(proposition, logic='K'):
     proposition = normalize(proposition)
-    model = Proof_Model()
+    model = Proof_Model({})
     model.add_world('1', propositions={proposition : False})
     if logic == 'KT':
         model.add_access('1', '1')
@@ -186,6 +186,61 @@ def complete_tableau(model, logic='K'):
         
         for world in worlds_to_add:
             model.add_world(world, worlds_to_add[world]['access'], worlds_to_add[world]['variables'], worlds_to_add[world]['propositions'])
+        
+        # changing things at new worlds that have been created based on True |=| or False <>
+        for world in model.worlds:
+            for accessible_world in model.worlds[world]['access']:
+                propositions_to_remove = []
+                for proposition in model.worlds[world]['propositions']:
+                    if (main_connective(proposition) == '|=|' and model.worlds[world]['propositions'][proposition]):
+                        if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
+                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
+                            
+                        else:
+                            if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
+                                return 'closed'
+                        
+                        propositions_to_remove.append(proposition)
+                    
+                    elif (main_connective(proposition) == '<>' and not model.worlds[world]['propositions'][proposition]):
+                        if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
+                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
+                        
+                        else:
+                            if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
+                                return 'closed'
+                
+                for proposition in propositions_to_remove:
+                    model.worlds[world]['propositions'].pop(proposition)
+    
+    for world in model.worlds:
+        for accessible_world in model.worlds[world]['access']:
+            propositions_to_remove = []
+            for proposition in model.worlds[world]['propositions']:
+                if (main_connective(proposition) == '|=|' and
+                    model.worlds[world]['propositions'][proposition]):
+                    if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
+                        model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
+                        
+                    else:
+                        if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
+                            return 'closed'
+                    
+                    propositions_to_remove.append(proposition)
+                
+                elif (main_connective(proposition) == '<>' and
+                      not model.worlds[world]['propositions'][proposition]):
+                    if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
+                        model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
+                    
+                    else:
+                        if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
+                            return 'closed'
+                    
+                    propositions_to_remove.append(proposition)
+            
+            for proposition in propositions_to_remove:
+                model.worlds[world]['propositions'].pop(proposition)
     
     # check for pure variables in model's propositions
     for world in model.worlds:
@@ -199,71 +254,106 @@ def complete_tableau(model, logic='K'):
                     if not model.worlds[world]['propositions'][proposition] == model.worlds[world]['variables'][variable]:
                         return 'closed'
 
+    # handles branching cases
     for world in model.worlds:
         for proposition in model.worlds[world]['propositions']:
             main_con = main_connective(proposition)
 
             # branching 'and'
-            if main_con == '/\\' and model.worlds[world]['propositions'][proposition]:
-                model.worlds[world]['propositions'].pop(proposition)
+            if main_con == '/\\' and not model.worlds[world]['propositions'][proposition]:
+                branch_1_model = deepcopy(model)
+                branch_2_model = deepcopy(model)
 
-                model.worlds[world]['propositions'][first_part(proposition)] = True
-                branch_1 = complete_tableau(model, logic)
+                branch_1_model.worlds[world]['propositions'].pop(proposition)
+                branch_1_model.worlds[world]['propositions'][first_part(proposition)] = False
+                branch_1 = complete_tableau(branch_1_model, logic)
 
-                model.worlds[world]['propositions'].pop(first_part(proposition))
-
-                model.worlds[world]['propositions'][second_part(proposition)] = True
-                branch_2 = complete_tableau(model, logic)
+                branch_2_model.worlds[world]['propositions'].pop(proposition)
+                branch_2_model.worlds[world]['propositions'][second_part(proposition)] = False
+                branch_2 = complete_tableau(branch_2_model, logic)
 
                 if branch_1 == 'closed' and branch_2 == 'closed':
                     return 'closed'
+                else:
+                    return 'open'
             
             # branching 'or'
-            elif main_con == '\\/' and not model.worlds[world]['propositions'][proposition]:
-                model.worlds[world]['propositions'].pop(proposition)
+            elif main_con == '\\/' and model.worlds[world]['propositions'][proposition]:
+                branch_1_model = deepcopy(model)
+                branch_2_model = deepcopy(model)
 
-                model.worlds[world]['propositions'][first_part(proposition)] = False
-                branch_1 = complete_tableau(model, logic)
+                branch_1_model.worlds[world]['propositions'].pop(proposition)
+                branch_1_model.worlds[world]['propositions'][first_part(proposition)] = True
+                branch_1 = complete_tableau(branch_1_model, logic)
 
-                model.worlds[world]['propositions'].pop(first_part(proposition))
-
-                model.worlds[world]['propositions'][second_part(proposition)] = False
-                branch_2 = complete_tableau(model, logic)
+                branch_2_model.worlds[world]['propositions'].pop(proposition)
+                branch_2_model.worlds[world]['propositions'][second_part(proposition)] = True
+                branch_2 = complete_tableau(branch_2_model, logic)
 
                 if branch_1 == 'closed' and branch_2 == 'closed':
                     return 'closed'
+                else:
+                    return 'open'
             
             # branching 'implies'
-            elif main_con == '->' and not model.worlds[world]['propositions'][proposition]:
-                model.worlds[world]['propositions'].pop(proposition)
+            elif main_con == '->' and model.worlds[world]['propositions'][proposition]:
+                branch_1_model = deepcopy(model)
+                branch_2_model = deepcopy(model)
 
-                model.worlds[world]['propositions'][first_part(proposition)] = True
-                branch_1 = complete_tableau(model, logic)
+                branch_1_model.worlds[world]['propositions'].pop(proposition)
+                branch_1_model.worlds[world]['propositions'][first_part(proposition)] = False
+                branch_1 = complete_tableau(branch_1_model, logic)
 
-                model.worlds[world]['propositions'].pop(first_part(proposition))
-
-                model.worlds[world]['propositions'][second_part(proposition)] = False
-                branch_2 = complete_tableau(model, logic)
+                branch_2_model.worlds[world]['propositions'].pop(proposition)
+                branch_2_model.worlds[world]['propositions'][second_part(proposition)] = True
+                branch_2 = complete_tableau(branch_2_model, logic)
 
                 if branch_1 == 'closed' and branch_2 == 'closed':
                     return 'closed'
+                else:
+                    return 'open'
     
     return 'open'
+
+def evaluate_proposition(proposition, logic):
+    new_model = initialize_tableau(proposition, logic)
+    result = complete_tableau(new_model, logic)
+    if result == 'closed':
+        return 'valid'
+    elif result == 'open':
+        return 'not valid'
+    else:
+        return 'problem occurred'
 
 def test_initialize_tableau():
     proposition = 'p -> q'
     logic = 'KT'
     print(initialize_tableau(proposition, logic))
 
-def test_reduce_propositions():
-    model = Proof_Model()
-    model.add_world('world 1', propositions={'<>p -> (q \\/ r)' : False})
-    print(model)
-
-    reduce_propositions(model, 'K')
-    print(model)
-
 def test_complete_tableau():
+    modal_examples = [
+        '|=|(A \\/ B) -> (|=|A \\/ |=|B)',
+        '|=|(A -> B) -> (|=|A -> |=|B)',
+        '(|=|<>A /\\ |=||=|B) -> |=|<>(A /\\ B)'
+    ]
+
+    # modal_example_models = [initialize_tableau(prop) for prop in modal_examples]
+
+    logic = 'K'
+
+    # proposition = '|=|(A -> B) -> (|=|A -> |=|B)'
+
+    # model = initialize_tableau(proposition, logic)
+    # print(complete_tableau(model, logic))
+    # return
+
+    for proposition in modal_examples:
+        model = initialize_tableau(proposition, logic)
+        print(model)
+        print(complete_tableau(model, logic))
+    
+    return
+    
     examples = [
         'p \\/ ~p',
         '~(p /\\ ~p)',
@@ -276,13 +366,14 @@ def test_complete_tableau():
         'p \\/ q -> q \\/ p',
         'p /\\ q -> q /\\ p',
         '(p -> q) -> ((p \\/ r) -> (q \\/ r))',
-        'p -> q'
+        'p -> q']
 
     logic = 'K'
 
     for proposition in examples:
         print('proposition : %s' % proposition)
         model = initialize_tableau(proposition, logic)
+        print(model)
         result = complete_tableau(model, logic)
         print(result)
 
@@ -293,15 +384,14 @@ def main():
     logic = get_logic()
     proposition = get_proposition()
 
-    model = initialize_tableau(proposition, logic)
-    result = complete_tableau(model, logic)
+    result = evaluate_proposition(proposition, logic)
 
-    if result == 'closed':
+    if result == 'valid':
         print('Proposition is a theorem of %s' % logic)
-    elif result == 'open':
+    elif result == 'not valid':
         print('Proposition is not a theorem of %s' % logic)
     else:
         print('Something went wrong when processing your proposition. My deepest apologies')
 
 if __name__ == '__main__':
-    test_complete_tableau()
+    main()
