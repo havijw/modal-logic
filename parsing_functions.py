@@ -75,15 +75,46 @@ def main_connective(proposition):
                 part_1 = remove_negation(part_1)
                 part_1 = strip_outer_parens(part_1)
         
-        if part_1[-2:] in dual_connectives or part_1[-2:] == '<>':
+        if part_1[-2:] in dual_connectives:
             return part_1[-2:]
-        elif part_1[-3:] == '|=|':
-            return part_1[-3:]
-        elif part_1[-1:] == '~':
-            return part_1[-1:]
+
+        elif part_1[-2:] == '<>':
+            if not part_1.upper() == part_1.lower():
+                return '<>'
+            else:
+                if part_1[0:2] == '<>':
+                    return '<>'
+                elif part_1[0:3] == '|=|':
+                    return '|=|'
+                elif part_1[0:1] == '~':
+                    return '~'
         
-        if proposition[0:2] in dual_connectives or proposition[0:2] == '<>':
+        elif part_1[-3:] == '|=|':
+            if not part_1.upper() == part_1.lower():
+                return '|=|'
+            else:
+                if part_1[0:2] == '<>':
+                    return '<>'
+                elif part_1[0:3] == '|=|':
+                    return '|=|'
+                elif part_1[0:1] == '~':
+                    return '~'
+        
+        elif part_1[-1:] == '~':
+            if not part_1.upper() == part_1.lower():
+                return '~'
+            else:
+                if part_1[0:2] == '<>':
+                    return '<>'
+                elif part_1[0:3] == '|=|':
+                    return '|=|'
+                elif part_1[0:1] == '~':
+                    return '~'
+        
+        if proposition[0:2] in dual_connectives:
             return proposition[0:2]
+        elif proposition[0:2] == '<>':
+            return '<>'
         elif proposition[0:3] == '|=|':
             return proposition[0:3]
         elif proposition[0:1] == '~':
@@ -343,5 +374,20 @@ def test_second_part():
     for i in range(len(to_test)):
         print(correct_answers[i], ':', second_part(to_test[i]))
 
+def test_normalize():
+    to_test = [
+        # '|=|A',
+        # '|=|<>A',
+        # '<>|=|A',
+        # '|=||=|A',
+        # '|=|<>A -> B',
+        # '(|=|<>A /\\ |=||=|B) -> |=|<>(A)'# /\\ B)'
+        '|=|<>(A)'
+    ]
+
+    for proposition in to_test:
+        print(main_connective(proposition))
+        # print(normalize(proposition))
+
 if __name__ == '__main__':
-    test_main_connective()
+    test_normalize()
