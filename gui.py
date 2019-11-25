@@ -130,6 +130,8 @@ class World:
                         self.arrows[arc_to_self] = (-1, -1)
                         self.arrows[arrow_tip]   = (-1, -1)
                         self.master.tag_bind(arc_to_self, '<Button 1>', lambda event, name = arc_to_self: self.delete_arrow(name))
+                        self.master.tag_bind(arc_to_self,   '<Button 1>', lambda event, name = arrow_tip: self.delete_arrow(name))
+                        self.master.tag_bind(arrow_tip, '<Button 1>', lambda event, name = arc_to_self: self.delete_arrow(name))
                         self.master.tag_bind(arrow_tip,   '<Button 1>', lambda event, name = arrow_tip: self.delete_arrow(name))
                     else:
                         new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=tk.LAST, width=3)
