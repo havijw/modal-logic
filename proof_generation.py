@@ -4,7 +4,7 @@ from parsing_functions import (
     first_part,
     second_part,
     main_connective,
-    strip_outer_parens
+    remove_outer_parens
 )
 from Proof_Model import Proof_Model
 from copy import copy, deepcopy
@@ -48,7 +48,7 @@ def is_reducible(model):
         for proposition in model.worlds[world]['propositions']:
             main_con = main_connective(proposition)
 
-            if main_con == '~':
+            if main_con == '--':
                 return True
 
             elif main_con == '/\\' and model.worlds[world]['propositions'][proposition]:
@@ -60,7 +60,7 @@ def is_reducible(model):
             elif main_con == '->' and not model.worlds[world]['propositions'][proposition]:
                 return True
 
-            elif main_con == '|=|' and not model.worlds[world]['propositions'][proposition]:
+            elif main_con == '[]' and not model.worlds[world]['propositions'][proposition]:
                 return True
             
             elif main_con == '<>' and model.worlds[world]['propositions'][proposition]:
@@ -77,7 +77,7 @@ def complete_tableau(model, logic='K'):
             for proposition in copy(model.worlds[world]['propositions']):
                 main_con = main_connective(proposition)
 
-                if main_con == '~':
+                if main_con == '--':
                     if second_part(proposition) in model.worlds[world]['propositions']:
                         if model.worlds[world]['propositions'][second_part(proposition)] == model.worlds[world]['propositions'][proposition]:
                             return 'closed'
@@ -145,7 +145,7 @@ def complete_tableau(model, logic='K'):
 
                     propositions_to_remove.append(proposition)
                 
-                elif main_con == '|=|' and not model.worlds[world]['propositions'][proposition]:
+                elif main_con == '[]' and not model.worlds[world]['propositions'][proposition]:
                     new_world_index = 1
                     while (world + '.' + str(new_world_index) in model.worlds[world]['access'] or
                            world + '.' + str(new_world_index) in worlds_to_add):
@@ -181,14 +181,14 @@ def complete_tableau(model, logic='K'):
         for world in worlds_to_add:
             model.add_world(world, worlds_to_add[world]['access'], worlds_to_add[world]['variables'], worlds_to_add[world]['propositions'])
         
-        # changing things at new worlds that have been created based on True |=| or False <>
+        # changing things at new worlds that have been created based on True [] or False <>
         for world in model.worlds:
             for accessible_world in model.worlds[world]['access']:
                 propositions_to_remove = []
                 if logic == 'KT':
                     propositions_to_add = {}
                 for proposition in model.worlds[world]['propositions']:
-                    if (main_connective(proposition) == '|=|' and model.worlds[world]['propositions'][proposition]):
+                    if (main_connective(proposition) == '[]' and model.worlds[world]['propositions'][proposition]):
                         if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
                             if logic == 'K':
                                 model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
@@ -226,7 +226,7 @@ def complete_tableau(model, logic='K'):
             if logic == 'KT':
                 propositions_to_add = {}
             for proposition in model.worlds[world]['propositions']:
-                if (main_connective(proposition) == '|=|' and
+                if (main_connective(proposition) == '[]' and
                     model.worlds[world]['propositions'][proposition]):
                     if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
                         if logic == 'K':
@@ -267,7 +267,7 @@ def complete_tableau(model, logic='K'):
     for world in model.worlds:
         for proposition in model.worlds[world]['propositions']:
             if main_connective(proposition) == '':
-                variable = strip_outer_parens(proposition)
+                variable = remove_outer_parens(proposition)
                 if variable not in model.worlds[world]['variables']:
                     model.worlds[world]['variables'][variable] = model.worlds[world]['propositions'][proposition]
                 
@@ -353,16 +353,16 @@ def test_initialize_tableau():
 
 def test_complete_tableau():
     modal_examples = [
-        '|=|(A \\/ B) -> (|=|A \\/ |=|B)',
-        '|=|(A -> B) -> (|=|A -> |=|B)',
-        '(|=|<>A /\\ |=||=|B) -> |=|<>(A /\\ B)'
+        '[](A \\/ B) -> ([]A \\/ []B)',
+        '[](A -> B) -> ([]A -> []B)',
+        '([]<>A /\\ [][]B) -> []<>(A /\\ B)'
     ]
 
     # modal_example_models = [initialize_tableau(prop) for prop in modal_examples]
 
     logic = 'K'
 
-    # proposition = '|=|(A -> B) -> (|=|A -> |=|B)'
+    # proposition = '[](A -> B) -> ([]A -> []B)'
 
     # model = initialize_tableau(proposition, logic)
     # print(complete_tableau(model, logic))
@@ -376,8 +376,8 @@ def test_complete_tableau():
     return
     
     examples = [
-        'p \\/ ~p',
-        '~(p /\\ ~p)',
+        'p \\/ --p',
+        '--(p /\\ --p)',
         'p -> p',
         'p -> (p \\/ p)',
         'p -> (p /\\ p)',
