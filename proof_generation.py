@@ -1,4 +1,4 @@
-from proposition_checker import check_proposition
+from check_proposition import check_proposition
 from parsing_functions import (
     normalize,
     first_part,

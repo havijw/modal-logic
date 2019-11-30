@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import font
-from proposition_checker import check_proposition
+from check_proposition import check_proposition
 from Model import Model
 
 RADIUS = 50
