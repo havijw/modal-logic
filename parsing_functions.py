@@ -94,8 +94,7 @@ def first_part(proposition):
             break
     
     if not binary:
-        if unary:
-            return ''
+        return ''
     
     first_part = ''
 
@@ -210,14 +209,17 @@ def test_first_part():
         '--<>[]--A' : '',
         '<><>[]<>A' : '',
         '<>[]A -> <><>(A -> []B)' : '<>[]A',
-        'A -> B)' : 'A', # shouldn't throw a ParensError
+        # 'A -> B)' : 'A', # should throw a ParensError
         # '(A -> B' : '(A' # should throw a ParensError
     }
 
     failed = False
     for proposition in test_cases:
+        print(proposition)
         part_1 = first_part(proposition)
-        if not part_1 == test_cases[proposition]:
+        if part_1 == test_cases[proposition]:
+            print('ok')
+        else:
             failed = True
             print('FAILURE:\nProposition %s returned .%s. should be .%s.' % (proposition, part_1, test_cases[proposition]))
     
@@ -278,4 +280,4 @@ def test_normalize():
         print('Looks good. Nice.')
 
 if __name__ == '__main__':
-    test_normalize()
+    test_first_part()
