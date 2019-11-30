@@ -129,10 +129,8 @@ class World:
                         )
                         self.arrows[arc_to_self] = (-1, -1)
                         self.arrows[arrow_tip]   = (-1, -1)
-                        self.master.tag_bind(arc_to_self, '<Button 1>', lambda event, name = arc_to_self: self.delete_arrow(name))
-                        self.master.tag_bind(arc_to_self, '<Button 1>', lambda event, name = arrow_tip:   self.delete_arrow(name))
-                        self.master.tag_bind(arrow_tip,   '<Button 1>', lambda event, name = arc_to_self: self.delete_arrow(name))
-                        self.master.tag_bind(arrow_tip,   '<Button 1>', lambda event, name = arrow_tip:   self.delete_arrow(name))
+                        self.master.tag_bind(arc_to_self, '<Button 1>', lambda event, arc = arc_to_self, tip = arrow_tip: self.delete_arrow_to_self(arc, tip))
+                        self.master.tag_bind(arrow_tip,   '<Button 1>', lambda event, arc = arc_to_self, tip = arrow_tip: self.delete_arrow_to_self(arc, tip))
                     else:
                         new_arrow = self.master.create_line(x, y, event.x, event.y, arrow=tk.LAST, width=3)
                         self.arrows[new_arrow] = (world.x, world.y)
@@ -149,6 +147,11 @@ class World:
         for world in worlds:
             if world.x == self.arrows[arrow][0] and world.y == self.arrows[arrow][1]:
                 model.remove_access(self.name, world.name)
+    
+    def delete_arrow_to_self(self, arc, tip):
+        self.master.delete(arc)
+        self.master.delete(tip)
+        model.remove_access(self.name, self.name)
 
 def distance(x1, y1, x2, y2):
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
