@@ -1,393 +1,281 @@
+UNARY_CONNECTIVES = ['--', '[]', '<>']
+BINARY_CONNECTIVES = ['->', '/\\', '\\/']
+
+class ParensError(Exception):
+    pass
+
 # determines if an argument has redundant outer parentheses
-def has_outer_parens(arg):
-    if not (arg[0] == '(' and arg[-1] == ')'):
+def has_outer_parens(proposition):
+    if proposition == '':
+        return False
+
+    if not proposition[0] == '(' and proposition[-1] == ')':
         return False
     
-    arg = arg[1:]
-    while not (arg.count('(') == arg.count(')')):
-        arg = arg[1:]
+    proposition = proposition[1:]
+    while not (proposition.count('(') == proposition.count(')')):
+        proposition = proposition[1:]
     
-    if arg == '':
+    if proposition == '':
         return True
     return False
 
 # takes redundant outer parentheses off for consistent formatting
-def strip_outer_parens(arg):
-    # if the argument is nothing, just return it
-    if arg == '':
-        return arg
+def remove_outer_parens(proposition):
+    proposition = proposition.replace(' ', '')
+    if proposition == '':
+        return ''
     
-    arg = arg.strip()
-
-    while has_outer_parens(arg):
-        arg = arg[1:-1]
-    return arg
+    while has_outer_parens(proposition):
+        proposition = proposition[1:-1]
+    return proposition
 
 # finds the main connective of an argument
 def main_connective(proposition):
-    proposition = strip_outer_parens(proposition)
-    proposition = proposition.replace(' ', '')
+    if not proposition.count('(') == proposition.count(')'):
+        raise ParensError('Mismatched parentheses in proposition %s' % proposition)
 
-    dual_connectives = ['->', '/\\', '\\/']
-    single_connectives = ['|=|', '<>', '~']
+    proposition = remove_outer_parens(proposition).replace(' ', '')
 
-    if '(' not in proposition:
-        for connective in dual_connectives:
-            if connective in proposition:
-                return connective
-        
-        if proposition[0:1] == '~':
-            return '~'
-        elif proposition[0:2] == '<>':
-            return '<>'
-        elif proposition[0:3] == '|=|':
-            return '|=|'
-        
-        return ''
+    binary = False
+    for connective in BINARY_CONNECTIVES:
+        if connective in proposition:
+            binary = True
+            break
     
-    else:
-        part_1 = ''
-        while not proposition[0] == '(':
-            part_1 += proposition[0]
-            proposition = proposition[1:]
-        
-        # part_1 could be nothing if the first part is in parens
-        if part_1 == '':
-            part_1 = proposition[0]
-            proposition = proposition[1:]
-
-            while not part_1.count(')') == part_1.count('('):
-                part_1 += proposition[0]
-                proposition = proposition[1:]
-        
-        elif part_1 in single_connectives:
-            connective = part_1
-            part_1 = proposition[0]
-            proposition = proposition[1:]
-
-            while not part_1.count(')') == part_1.count('('):
-                part_1 += proposition[0]
-                proposition = proposition[1:]
-            
-            if proposition == '':
-                return connective
-            else:
-                part_1 = remove_negation(part_1)
-                part_1 = strip_outer_parens(part_1)
-        
-        if part_1[-2:] in dual_connectives:
-            return part_1[-2:]
-
-        elif part_1[-2:] == '<>':
-            if not part_1.upper() == part_1.lower():
-                return '<>'
-            else:
-                if part_1[0:2] == '<>':
-                    return '<>'
-                elif part_1[0:3] == '|=|':
-                    return '|=|'
-                elif part_1[0:1] == '~':
-                    return '~'
-        
-        elif part_1[-3:] == '|=|':
-            if not part_1.upper() == part_1.lower():
-                return '|=|'
-            else:
-                if part_1[0:2] == '<>':
-                    return '<>'
-                elif part_1[0:3] == '|=|':
-                    return '|=|'
-                elif part_1[0:1] == '~':
-                    return '~'
-        
-        elif part_1[-1:] == '~':
-            if not part_1.upper() == part_1.lower():
-                return '~'
-            else:
-                if part_1[0:2] == '<>':
-                    return '<>'
-                elif part_1[0:3] == '|=|':
-                    return '|=|'
-                elif part_1[0:1] == '~':
-                    return '~'
-        
-        if proposition[0:2] in dual_connectives:
+    if not binary:
+        proposition = proposition.replace('(', '')
+        proposition = proposition.replace(')', '')
+        if proposition[0:2] in UNARY_CONNECTIVES:
             return proposition[0:2]
-        elif proposition[0:2] == '<>':
-            return '<>'
-        elif proposition[0:3] == '|=|':
-            return proposition[0:3]
-        elif proposition[0:1] == '~':
-            return proposition[0:1]
+        return ''
+
+    while not (proposition[0:2] in BINARY_CONNECTIVES and proposition.count('(') == proposition.count(')')):
+        if proposition == '':
+            raise ParensError
+        proposition = proposition[1:]
+    
+    return proposition[0:2]
 
 # adds negation to the front of an argument
 def add_negation(arg):
     arg = normalize(arg)
 
-    return '(~' + arg + ')'
+    return '(--' + arg + ')'
 
 # removes negation from argument if it exists
 # otherwise just returns the argument
 def remove_negation(arg):
     arg = normalize(arg)
     
-    if not main_connective(arg) == '~':
+    if not main_connective(arg) == '--':
         return arg
     else:
-        return arg[2:-1]
+        return arg[3:-1]
 
 # finds the part of the argument before the main connective
 # for example, first_part('A \\/ B') returns 'A'
 def first_part(proposition):
-    proposition = strip_outer_parens(proposition)
-    proposition = proposition.replace(' ', '')
+    if not proposition.count('(') == proposition.count(')'):
+        raise ParensError('Mismatched parentheses in proposition %s' % proposition)
 
-    dual_connectives = ['->', '/\\', '\\/']
-    single_connectives = ['|=|', '<>', '~']
+    proposition = remove_outer_parens(proposition).replace(' ', '')
 
-    main_con = main_connective(proposition)
-
-    if main_con == '':
-        return proposition
-    elif main_con == '~' or main_con == '<>' or main_con == '|=|':
-        return ''
+    binary = False
+    for connective in BINARY_CONNECTIVES:
+        if connective in proposition:
+            binary = True
+            break
     
-    part_1 = ''
-
-    if '(' not in proposition:
-        while not proposition[0:2] == main_con:
-            part_1 += proposition[0]
-            proposition = proposition[1:]
+    unary = False
+    for connective in UNARY_CONNECTIVES:
+        if connective in proposition:
+            unary = True
+            break
     
-    else:
-        part_1 = ''
-        while not proposition[0] == '(':
-            part_1 += proposition[0]
-            proposition = proposition[1:]
-        
-        # part_1 could be nothing if the first part is in parens
-        if part_1 == '':
-            part_1 = proposition[0]
-            proposition = proposition[1:]
-
-            while not part_1.count(')') == part_1.count('('):
-                part_1 += proposition[0]
-                proposition = proposition[1:]
-        
-        elif part_1 in single_connectives:
-            part_1 += proposition[0]
-            proposition = proposition[1:]
-
-            while not part_1.count(')') == part_1.count('('):
-                part_1 += proposition[0]
-                proposition = proposition[1:]
-            
-            part_1 = strip_outer_parens(part_1)
+    if not binary:
+        if unary:
+            return ''
     
-    if part_1[-2:] in dual_connectives:
-        part_1 = part_1[0:-2]
+    first_part = ''
+
+    while not (proposition[0:2] in BINARY_CONNECTIVES and first_part.count('(') == first_part.count(')')):
+        if proposition == '':
+            raise ParensError
+        first_part += proposition[0]
+        proposition = proposition[1:]
     
-    return normalize(part_1)
+    return first_part
 
 def second_part(proposition):
-    proposition = strip_outer_parens(proposition)
-    proposition = proposition.replace(' ', '')
+    if not proposition.count('(') == proposition.count(')'):
+        raise ParensError('Mismatched parentheses in proposition %s' % proposition)
 
-    dual_connectives = ['->', '/\\', '\\/']
-    single_connectives = ['|=|', '<>', '~']
+    proposition = remove_outer_parens(proposition).replace(' ', '')
 
-    main_con = main_connective(proposition)
+    binary = False
+    for connective in BINARY_CONNECTIVES:
+        if connective in proposition:
+            binary = True
+            break
 
-    if main_con == '':
-        return proposition
-    elif main_con == '~':
-        return proposition[1:]
-    elif main_con == '<>':
-        return proposition[2:]
-    elif main_con == '|=|':
-        return proposition[3:]
+    unary = False
+    for connective in UNARY_CONNECTIVES:
+        if connective in proposition:
+            unary = True
+            break
     
-    part_1 = ''
-
-    if '(' not in proposition:
-        while not proposition[0:2] == main_con:
-            part_1 += proposition[0]
-            proposition = proposition[1:]
-    
-    else:
-        part_1 = ''
-        while not proposition[0] == '(':
-            part_1 += proposition[0]
-            proposition = proposition[1:]
+    if not binary:
+        if unary:
+            proposition = proposition.replace('(', '')
+            proposition = proposition.replace(')', '')
+            return proposition[2:]
         
-        # part_1 could be nothing if the first part is in parens
-        if part_1 == '':
-            part_1 = proposition[0]
-            proposition = proposition[1:]
+        else:
+            return proposition
 
-            while not part_1.count(')') == part_1.count('('):
-                part_1 += proposition[0]
-                proposition = proposition[1:]
-        
-        elif part_1 in single_connectives:
-            part_1 += proposition[0]
-            proposition = proposition[1:]
-
-            while not part_1.count(')') == part_1.count('('):
-                part_1 += proposition[0]
-                proposition = proposition[1:]
-            
-            part_1 = strip_outer_parens(part_1)
+    while not (proposition[0:2] in BINARY_CONNECTIVES and proposition.count('(') == proposition.count(')')):
+        if proposition == '':
+            raise ParensError
+        proposition = proposition[1:]
     
-    if proposition[0:2] in dual_connectives:
-        proposition = proposition[2:]
-    
-    return normalize(proposition)
+    return proposition[2:]
 
 # normalizes argument to standard form
-def normalize(arg):
-    arg = strip_outer_parens(arg)
-
-    main_con = main_connective(arg)
-
+def normalize(proposition):
+    main_con = main_connective(proposition)
+    
     if main_con == '':
-        return arg
-    
-    # store first and second parts of argument
-    # use recursion to normalize first and second parts
-    # then combine everything back into one piece
-    p1 = normalize(first_part(arg))
-    p2 = normalize(second_part(arg))
-
-    # reassemble the pieces
-    if main_con in ['~', '|=|', '<>']:
-        arg = main_con + p2
-    else:
-        arg = p1 + ' ' + main_con + ' ' + p2
-
-    # ensure argument is enclosed in outer parentheses
-    if not (arg[0] == '(' and arg[-1] == ')'):
-        arg = '(' + arg + ')'
-    else:
-        argDupe = arg[1:]
-        while not argDupe.count('(') == argDupe.count(')'):
-            argDupe = argDupe[1:]
-        
-        if not argDupe == '':
-            arg = '(' + arg + ')'
-    
-    return arg
+        proposition = proposition.replace('(', '').replace(')', '')
+        return proposition
+    elif main_con in UNARY_CONNECTIVES:
+        return ''.join(['(', main_con, normalize(second_part(proposition)), ')'])
+    elif main_con in BINARY_CONNECTIVES:
+        return ''.join(['(', normalize(first_part(proposition)), ' ', main_con, ' ', normalize(second_part(proposition)), ')'])
 
 def test_main_connective():
-    to_test = [
-        'A',
-        'A -> B',
-        'A /\\ B',
-        'A \\/ B',
-        '~A',
-        '(A -> B) /\\ C',
-        'C /\\ (A -> B)',
-        '((A -> B) /\\ (C -> D))',
-        '(A -> B) /\\ (C -> D)',
-        '(~A -> B) \\/ ~(A -> C \\/ D)',
-        '(A)',
-        '((A))',
-        '~~(p \\/ ~p)',
-        '((~p -> r) /\\ (~q -> r)) -> (~(p /\\ q) -> r)',
-        '(~(p /\\ q) -> r)',
-        '(~p -> r) /\\ (~q -> r)'
-    ]
+    test_cases = {
+        'A' : '',
+        '--A' : '--',
+        '<>A' : '<>',
+        '[]A' : '[]',
+        'A -> B' : '->',
+        'A /\\ B' : '/\\',
+        'A \\/ B' : '\\/',
+        '(A)' : '',
+        '(--A)' : '--',
+        '--(A)' : '--',
+        'A -> --B' : '->',
+        '--A -> B' : '->',
+        '--A -> (B)' : '->',
+        '--A -> --B' : '->',
+        '(--A) -> (B /\\ A)' : '->',
+        '--<>[]--A' : '--',
+        '<><>[]<>A' : '<>',
+        '<>[]A -> <><>(A -> []B)' : '->',
+        '((A -> B) \\/ (C /\\ D)) -> E': '->',
+        '--A -> (A /\\ <>B)' : '->',
+        '(A /\\ <>B)' : '/\\'
+        # '(A -> B' : '->', # should throw a ParensError
+        # 'A -> B)' : '->'  # should throw a ParensError
+    }
 
-    proposition = '|=|(A -> B) -> (|=|A -> |=|B)'
-    print(main_connective(proposition))
-    print(first_part(proposition))
+    failed = False
+    for proposition in test_cases:
+        main_con = main_connective(proposition)
+        if not main_con == test_cases[proposition]:
+            failed = True
+            print('FAILURE:\nProposition %s returned %s should be %s' % (proposition, main_con, test_cases[proposition]))
     
-    # for proposition in to_test:
-        # print(main_connective(proposition))
+    if not failed:
+        print('Looks good. Nice.')
 
 def test_first_part():
-    to_test = [
-        'A',
-        'A -> B',
-        'A /\\ B',
-        'A \\/ B',
-        '~A',
-        '(A -> B) /\\ C',
-        'C /\\ (A -> B)',
-        '((A -> B) /\\ (C -> D))',
-        '(A -> B) /\\ (C -> D)',
-        '(~A -> B) \\/ ~(A -> C \\/ D)',
-        '(A)',
-        '((A))',
-        '~~(p \\/ ~p)',
-        '((~p -> r) /\\ (~q -> r)) -> (~(p /\\ q) -> r)',
-        '(~(p /\\ q) -> r)',
-        '(~p -> r) /\\ (~q -> r)'
-    ]
-    
-    for proposition in to_test:
-        print(first_part(proposition))
-    
-    props = ['~P', '|=|P', '<>P', '<>P -> Q', '|=|P -> Q']
+    test_cases = {
+        'A' : 'A',
+        '--A' : '',
+        '<>A' : '',
+        '[]A' : '',
+        'A -> B' : 'A',
+        'A /\\ B' : 'A',
+        'A \\/ B' : 'A',
+        '(A)' : '(A)',
+        '(--A)' : '',
+        '--(A)' : '',
+        'A -> --B' : 'A',
+        '--A -> B' : '--A',
+        '--A -> (B)' : '--A',
+        '--A -> --B' : '--A',
+        '(--A) -> (B /\\ A)' : '(--A)',
+        '--<>[]--A' : '',
+        '<><>[]<>A' : '',
+        '<>[]A -> <><>(A -> []B)' : '<>[]A',
+        'A -> B)' : 'A', # shouldn't throw a ParensError
+        # '(A -> B' : '(A' # should throw a ParensError
+    }
 
-    for prop in props:
-        print(first_part(prop))
+    failed = False
+    for proposition in test_cases:
+        part_1 = first_part(proposition)
+        if not part_1 == test_cases[proposition]:
+            failed = True
+            print('FAILURE:\nProposition %s returned .%s. should be .%s.' % (proposition, part_1, test_cases[proposition]))
+    
+    if not failed:
+        print('Looks good. Nice.')
 
 def test_second_part():
-    to_test = [
-        'A',
-        'A -> B',
-        'A /\\ B',
-        'A \\/ B',
-        '~A',
-        '(A -> B) /\\ C',
-        'C /\\ (A -> B)',
-        '((A -> B) /\\ (C -> D))',
-        '(A -> B) /\\ (C -> D)',
-        '(~A -> B) \\/ ~(A -> C \\/ D)',
-        '(A)',
-        '((A))',
-        '~~(p \\/ ~p)',
-        '((~p -> r) /\\ (~q -> r)) -> (~(p /\\ q) -> r)',
-        '(~(p /\\ q) -> r)',
-        '(~p -> r) /\\ (~q -> r)'
-    ]
-    correct_answers = [
-        'A',
-        'B',
-        'B',
-        'B',
-        'A',
-        'C',
-        'A -> B',
-        'C -> D',
-        'C -> D',
-        '~(A -> C \\/ D)',
-        'A',
-        'A',
-        '~(p \\/ ~p)',
-        '~(p /\\ q) -> r',
-        'r',
-        '~q -> r'
-    ]
+    test_cases = {
+        'A' : 'A',
+        '--A' : 'A',
+        '<>A' : 'A',
+        '[]A' : 'A',
+        'A -> B' : 'B',
+        'A /\\ B' : 'B',
+        'A \\/ B' : 'B',
+        '(A)' : '(A)',
+        '(--A)' : 'A',
+        '--(A)' : 'A',
+        'A -> --B' : '--B',
+        '--A -> B' : 'B',
+        '--A -> (B)' : '(B)',
+        '--A -> --B' : '--B',
+        '(--A) -> (B /\\ A)' : '(B/\\A)',
+        '--<>[]--A' : '<>[]--A',
+        '<><>[]<>A' : '<>[]<>A',
+        '<>[]A -> <><>(A -> []B)' : '<><>(A->[]B)'
+        # 'A -> B)' : 'B)', # shouldn't throw a ParensError
+        # '(A -> B' : '(A' # should throw a ParensError
+    }
+
+    failed = False
+    for proposition in test_cases:
+        part_2 = second_part(proposition)
+        if not part_2 == test_cases[proposition]:
+            failed = True
+            print('FAILURE:\nProposition %s returned .%s. should be .%s.' % (proposition, part_2, test_cases[proposition]))
     
-    for i in range(len(to_test)):
-        print(correct_answers[i], ':', second_part(to_test[i]))
+    if not failed:
+        print('Looks good. Nice.')
 
 def test_normalize():
-    to_test = [
-        # '|=|A',
-        # '|=|<>A',
-        # '<>|=|A',
-        # '|=||=|A',
-        # '|=|<>A -> B',
-        # '(|=|<>A /\\ |=||=|B) -> |=|<>(A)'# /\\ B)'
-        '|=|<>(A)'
-    ]
+    test_cases = {
+        'A /\\ B /\\ C' : '(A /\\ (B /\\ C))',
+        'A -> B' : '(A -> B)',
+        '--A' : '(--A)',
+        '--<>A' : '(--(<>A))',
+        '--A -> (A /\\ <>B)' : '((--A) -> (A /\\ (<>B)))'
+    }
 
-    for proposition in to_test:
-        print(main_connective(proposition))
-        # print(normalize(proposition))
+    failed = False
+    for proposition in test_cases:
+        normed = normalize(proposition)
+        if not normed == test_cases[proposition]:
+            failed = True
+            print('FAILURE:\nProposition %s returned .%s. should be .%s.' % (proposition, normed, test_cases[proposition]))
+    
+    if not failed:
+        print('Looks good. Nice.')
 
 if __name__ == '__main__':
     test_normalize()
