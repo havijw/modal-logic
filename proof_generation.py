@@ -12,19 +12,13 @@ from copy import copy, deepcopy
 def get_logic():
     print('Which modal logic would you like to work in?',
           '(1) K',
-          '(2) KT',
-          '(3) S4',
-          '(4) S5', sep='\n', end='\n')
+          '(2) KT', sep='\n', end='\n')
     
     choice = input()
     while not ('1' in choice or
                '2' in choice or
-               '3' in choice or
-               '4' in choice or
                choice.upper() == 'K' or
-               choice.upper() == 'KT' or
-               choice.upper() == 'S4' or
-               choice.upper() == 'S5'):
+               choice.upper() == 'KT'):
         print('Sorry, %s is not a logic I know\nWhich modal logic would you like to work in?' % choice)
         choice = input()
     
@@ -32,10 +26,6 @@ def get_logic():
         return 'K'
     elif '2' in choice or choice.upper() == 'KT':
         return 'KT'
-    elif '3' in choice or choice.upper() == 'S4':
-        return 'S4'
-    elif '4' in choice or choice.upper() == 'S5':
-        return 'S5'
 
 def get_proposition():
     print('Enter the proposition you would like to check')
@@ -163,6 +153,8 @@ def complete_tableau(model, logic='K'):
                     
                     new_world_name = world + '.' + str(new_world_index)
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : False}}
+                    if logic == 'KT':
+                        worlds_to_add[new_world_name]['access'].append(new_world_name)
                     model.add_access(world, new_world_name)
 
                     propositions_to_remove.append(proposition)
@@ -175,6 +167,8 @@ def complete_tableau(model, logic='K'):
                     
                     new_world_name = world + '.' + str(new_world_index)
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : True}}
+                    if logic == 'KT':
+                        worlds_to_add[new_world_name]['access'].append(new_world_name)
                     model.add_access(world, new_world_name)
 
                     propositions_to_remove.append(proposition)
@@ -191,10 +185,11 @@ def complete_tableau(model, logic='K'):
         for world in model.worlds:
             for accessible_world in model.worlds[world]['access']:
                 propositions_to_remove = []
+                propositions_to_add = {}
                 for proposition in model.worlds[world]['propositions']:
                     if (main_connective(proposition) == '|=|' and model.worlds[world]['propositions'][proposition]):
                         if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
+                            propositions_to_add[normalize(second_part(proposition))] = True
                             
                         else:
                             if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
@@ -204,23 +199,26 @@ def complete_tableau(model, logic='K'):
                     
                     elif (main_connective(proposition) == '<>' and not model.worlds[world]['propositions'][proposition]):
                         if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
+                            propositions_to_add[normalize(second_part(proposition))] = False
                         
                         else:
                             if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
                                 return 'closed'
                 
+                for proposition in propositions_to_add:
+                    model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
                 for proposition in propositions_to_remove:
                     model.worlds[world]['propositions'].pop(proposition)
     
     for world in model.worlds:
         for accessible_world in model.worlds[world]['access']:
             propositions_to_remove = []
+            propositions_to_add = {}
             for proposition in model.worlds[world]['propositions']:
                 if (main_connective(proposition) == '|=|' and
                     model.worlds[world]['propositions'][proposition]):
                     if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                        model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
+                        propositions_to_add[normalize(second_part(proposition))] = True
                         
                     else:
                         if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
@@ -231,7 +229,7 @@ def complete_tableau(model, logic='K'):
                 elif (main_connective(proposition) == '<>' and
                       not model.worlds[world]['propositions'][proposition]):
                     if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                        model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
+                        propositions_to_add[normalize(second_part(proposition))] = False
                     
                     else:
                         if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
@@ -239,6 +237,8 @@ def complete_tableau(model, logic='K'):
                     
                     propositions_to_remove.append(proposition)
             
+            for proposition in propositions_to_add:
+                model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
             for proposition in propositions_to_remove:
                 model.worlds[world]['propositions'].pop(proposition)
     
@@ -315,7 +315,7 @@ def complete_tableau(model, logic='K'):
     
     return 'open'
 
-def evaluate_proposition(proposition, logic):
+def evaluate_proposition(proposition, logic='K'):
     new_model = initialize_tableau(proposition, logic)
     result = complete_tableau(new_model, logic)
     if result == 'closed':
