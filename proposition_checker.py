@@ -13,7 +13,7 @@ def check_proposition(proposition, world, model):
     part_2 = second_part(proposition)
 
     # for modal-free connectives, we can reduce to simpler cases
-    if main_con == '~':
+    if main_con == '--':
         return not check_proposition(part_2, world, model)
     elif main_con == '/\\':
         return check_proposition(part_1, world, model) and check_proposition(part_2, world, model)
@@ -31,7 +31,7 @@ def check_proposition(proposition, world, model):
         return False
     
     # logic for box
-    elif main_con == '|=|':
+    elif main_con == '[]':
         for accessible_world in model.worlds[world]['access']:
             if not check_proposition(part_2, accessible_world, model):
                 return False
