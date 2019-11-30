@@ -185,11 +185,15 @@ def complete_tableau(model, logic='K'):
         for world in model.worlds:
             for accessible_world in model.worlds[world]['access']:
                 propositions_to_remove = []
-                propositions_to_add = {}
+                if logic == 'KT':
+                    propositions_to_add = {}
                 for proposition in model.worlds[world]['propositions']:
                     if (main_connective(proposition) == '|=|' and model.worlds[world]['propositions'][proposition]):
                         if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                            propositions_to_add[normalize(second_part(proposition))] = True
+                            if logic == 'K':
+                                model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
+                            elif logic == 'KT':
+                                propositions_to_add[normalize(second_part(proposition))] = True
                             
                         else:
                             if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
@@ -199,26 +203,36 @@ def complete_tableau(model, logic='K'):
                     
                     elif (main_connective(proposition) == '<>' and not model.worlds[world]['propositions'][proposition]):
                         if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                            propositions_to_add[normalize(second_part(proposition))] = False
+                            if logic == 'K':
+                                model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
+                            elif logic == 'KT':
+                                propositions_to_add[normalize(second_part(proposition))] = False
                         
                         else:
                             if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
                                 return 'closed'
-                
-                for proposition in propositions_to_add:
-                    model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
+                if logic == 'KT':
+                    for proposition in propositions_to_add:
+                        if proposition in model.worlds[world]['propositions']:
+                            if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
+                                return 'closed'
+                        model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
                 for proposition in propositions_to_remove:
                     model.worlds[world]['propositions'].pop(proposition)
     
     for world in model.worlds:
         for accessible_world in model.worlds[world]['access']:
             propositions_to_remove = []
-            propositions_to_add = {}
+            if logic == 'KT':
+                propositions_to_add = {}
             for proposition in model.worlds[world]['propositions']:
                 if (main_connective(proposition) == '|=|' and
                     model.worlds[world]['propositions'][proposition]):
                     if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                        propositions_to_add[normalize(second_part(proposition))] = True
+                        if logic == 'K':
+                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
+                        elif logic == 'KT':
+                            propositions_to_add[normalize(second_part(proposition))] = True
                         
                     else:
                         if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
@@ -229,7 +243,10 @@ def complete_tableau(model, logic='K'):
                 elif (main_connective(proposition) == '<>' and
                       not model.worlds[world]['propositions'][proposition]):
                     if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                        propositions_to_add[normalize(second_part(proposition))] = False
+                        if logic == 'K':
+                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
+                        elif logic == 'KT':
+                            propositions_to_add[normalize(second_part(proposition))] = False
                     
                     else:
                         if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
@@ -237,8 +254,12 @@ def complete_tableau(model, logic='K'):
                     
                     propositions_to_remove.append(proposition)
             
-            for proposition in propositions_to_add:
-                model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
+            if logic == 'KT':
+                for proposition in propositions_to_add:
+                    if proposition in model.worlds[world]['propositions']:
+                        if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
+                            return 'closed'
+                    model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
             for proposition in propositions_to_remove:
                 model.worlds[world]['propositions'].pop(proposition)
     
