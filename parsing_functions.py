@@ -37,20 +37,23 @@ def main_connective(proposition):
 
     proposition = remove_outer_parens(proposition).replace(' ', '')
 
-    binary = False
-    for connective in BINARY_CONNECTIVES:
+    # check if there is any connective in the proposition
+    connected = False
+    for connective in UNARY_CONNECTIVES:
         if connective in proposition:
-            binary = True
+            connected = True
             break
-    
-    if not binary:
-        proposition = proposition.replace('(', '')
-        proposition = proposition.replace(')', '')
-        if proposition[0:2] in UNARY_CONNECTIVES:
-            return proposition[0:2]
+    if not connected:
+        for connective in BINARY_CONNECTIVES:
+            if connective in proposition:
+                connected = True
+                break
+    if not connected:
         return ''
 
-    while not (proposition[0:2] in BINARY_CONNECTIVES and proposition.count('(') == proposition.count(')')):
+    while not ((   proposition[0:2] in BINARY_CONNECTIVES
+                or proposition[0:2] in UNARY_CONNECTIVES  and has_outer_parens(proposition[2:]))
+               and proposition.count('(') == proposition.count(')')):
         if proposition == '':
             raise ParensError
         proposition = proposition[1:]
@@ -174,7 +177,8 @@ def test_main_connective():
         '<>[]A -> <><>(A -> []B)' : '->',
         '((A -> B) \\/ (C /\\ D)) -> E': '->',
         '--A -> (A /\\ <>B)' : '->',
-        '(A /\\ <>B)' : '/\\'
+        '(A /\\ <>B)' : '/\\',
+        '[](A -> B)' : '[]'
         # '(A -> B' : '->', # should throw a ParensError
         # 'A -> B)' : '->'  # should throw a ParensError
     }
@@ -280,4 +284,4 @@ def test_normalize():
         print('Looks good. Nice.')
 
 if __name__ == '__main__':
-    test_first_part()
+    test_main_connective()
