@@ -31,34 +31,70 @@ def remove_outer_parens(proposition):
     return proposition
 
 # finds the main connective of an argument
-def main_connective(proposition):
-    if not proposition.count('(') == proposition.count(')'):
-        raise ParensError('Mismatched parentheses in proposition %s' % proposition)
+def main_connective(arg):
+    arg = remove_outer_parens(arg)
 
-    proposition = remove_outer_parens(proposition).replace(' ', '')
-
-    # check if there is any connective in the proposition
-    connected = False
-    for connective in UNARY_CONNECTIVES:
-        if connective in proposition:
-            connected = True
-            break
-    if not connected:
-        for connective in BINARY_CONNECTIVES:
-            if connective in proposition:
-                connected = True
-                break
-    if not connected:
-        return ''
-
-    while not ((   proposition[0:2] in BINARY_CONNECTIVES
-                or proposition[0:2] in UNARY_CONNECTIVES  and has_outer_parens(proposition[2:]))
-               and proposition.count('(') == proposition.count(')')):
-        if proposition == '':
-            raise ParensError
-        proposition = proposition[1:]
+    connectives = UNARY_CONNECTIVES
+    connectives.extend(BINARY_CONNECTIVES)
     
-    return proposition[0:2]
+    if '(' not in arg:
+        for con in connectives:
+            if con in arg:
+                return con
+        return ''
+    
+    else:
+        if arg[0:2] in UNARY_CONNECTIVES:
+            while arg[0:2] in UNARY_CONNECTIVES:
+                arg = arg[1:]
+            
+            argDupe = arg[2:] # duplicate argument to modify and remove initial '('
+            while not argDupe.count('(') == argDupe.count(')'):
+                argDupe = argDupe[1:]
+            
+            if argDupe == '':
+                return '--'
+        
+        while not arg[0:2] in connectives:
+            arg = arg[1:]
+        
+        while not arg.count('(') == arg.count(')'):
+            arg = arg[1:]
+            while not arg[0:2] in connectives:
+                arg = arg[1:]
+        
+        return arg[0:2]
+    # if not proposition.count('(') == proposition.count(')'):
+    #     raise ParensError('Mismatched parentheses in proposition %s' % proposition)
+
+    # proposition = remove_outer_parens(proposition)
+
+    # proposition = remove_outer_parens(proposition).replace(' ', '')
+
+    # # check if there is any connective in the proposition
+    # connected = False
+    # for connective in UNARY_CONNECTIVES:
+    #     if connective in proposition:
+    #         connected = True
+    #         break
+    # if not connected:
+    #     for connective in BINARY_CONNECTIVES:
+    #         if connective in proposition:
+    #             connected = True
+    #             break
+    # if not connected:
+    #     return ''
+    # print(proposition)
+    # while not ((   proposition[0:2] in BINARY_CONNECTIVES
+    #             or proposition[0:2] in UNARY_CONNECTIVES and (has_outer_parens(remove_outer_parens(proposition)[2:])
+    #                                                           or main_connective(remove_outer_parens(proposition)[2:]) == ''))
+    #            and proposition.count('(') == proposition.count(')')):
+    #     if proposition == '':
+    #         raise ParensError
+    #     proposition = proposition[1:]
+    #     print(proposition)
+    
+    # return proposition[0:2]
 
 # adds negation to the front of an argument
 def add_negation(arg):
@@ -143,6 +179,11 @@ def second_part(proposition):
         
         else:
             return proposition
+    
+    elif unary:
+        if main_connective(proposition) in UNARY_CONNECTIVES:
+            proposition = remove_outer_parens(proposition)
+            return proposition[2:]
 
     while not (proposition[0:2] in BINARY_CONNECTIVES and proposition.count('(') == proposition.count(')')):
         if proposition == '':
@@ -153,11 +194,12 @@ def second_part(proposition):
 
 # normalizes argument to standard form
 def normalize(proposition):
+    print(proposition)
     main_con = main_connective(proposition)
     
     if main_con == '':
         proposition = proposition.replace('(', '').replace(')', '')
-        return proposition
+        return ''.join(['(', proposition, ')'])
     elif main_con in UNARY_CONNECTIVES:
         return ''.join(['(', main_con, normalize(second_part(proposition)), ')'])
     elif main_con in BINARY_CONNECTIVES:
@@ -279,7 +321,9 @@ def test_normalize():
         'A -> B' : '(A -> B)',
         '--A' : '(--A)',
         '--<>A' : '(--(<>A))',
-        '--A -> (A /\\ <>B)' : '((--A) -> (A /\\ (<>B)))'
+        '--A -> (A /\\ <>B)' : '((--A) -> (A /\\ (<>B)))',
+        '[]B' : '([]B)',
+        '[]A -> []B' : '(([]A) -> ([]B))'
     }
 
     failed = False
@@ -293,4 +337,5 @@ def test_normalize():
         print('Looks good. Nice.')
 
 if __name__ == '__main__':
-    test_second_part()
+    print(main_connective('([]((A) -> (B))) -> (([](A)) -> ([](B)))'))
+    # test_normalize()
