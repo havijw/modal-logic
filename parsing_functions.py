@@ -6,7 +6,7 @@ class ParensError(Exception):
 
 # determines if an argument has redundant outer parentheses
 def has_outer_parens(proposition):
-    if proposition == '':
+    if proposition == '' or len(proposition) == 1:
         return False
 
     if not proposition[0] == '(' and proposition[-1] == ')':
@@ -84,24 +84,32 @@ def first_part(proposition):
 
     proposition = remove_outer_parens(proposition).replace(' ', '')
 
+    unary = False
     binary = False
+    # check for binary connective
     for connective in BINARY_CONNECTIVES:
         if connective in proposition:
             binary = True
             break
     
-    unary = False
+    # check for unary connective
     for connective in UNARY_CONNECTIVES:
         if connective in proposition:
             unary = True
             break
     
-    if not binary:
+    # unary but not binary has no first part
+    if unary and not binary:
         return ''
+    # neither unary nor binary is just a letter
+    elif not (unary or binary):
+        return proposition
     
     first_part = ''
 
-    while not (proposition[0:2] in BINARY_CONNECTIVES and first_part.count('(') == first_part.count(')')):
+    while not ((   proposition[0:2] in BINARY_CONNECTIVES
+                or proposition[0:2] in UNARY_CONNECTIVES  and has_outer_parens(proposition[2:]))
+               and proposition.count('(') == proposition.count(')')):
         if proposition == '':
             raise ParensError
         first_part += proposition[0]
@@ -202,7 +210,7 @@ def test_first_part():
         'A -> B' : 'A',
         'A /\\ B' : 'A',
         'A \\/ B' : 'A',
-        '(A)' : '(A)',
+        '(A)' : 'A',
         '(--A)' : '',
         '--(A)' : '',
         'A -> --B' : 'A',
@@ -213,16 +221,16 @@ def test_first_part():
         '--<>[]--A' : '',
         '<><>[]<>A' : '',
         '<>[]A -> <><>(A -> []B)' : '<>[]A',
+        '[](A -> B)' : ''
         # 'A -> B)' : 'A', # should throw a ParensError
         # '(A -> B' : '(A' # should throw a ParensError
     }
 
     failed = False
     for proposition in test_cases:
-        print(proposition)
         part_1 = first_part(proposition)
         if part_1 == test_cases[proposition]:
-            print('ok')
+            pass
         else:
             failed = True
             print('FAILURE:\nProposition %s returned .%s. should be .%s.' % (proposition, part_1, test_cases[proposition]))
@@ -239,7 +247,7 @@ def test_second_part():
         'A -> B' : 'B',
         'A /\\ B' : 'B',
         'A \\/ B' : 'B',
-        '(A)' : '(A)',
+        '(A)' : 'A',
         '(--A)' : 'A',
         '--(A)' : 'A',
         'A -> --B' : '--B',
@@ -249,7 +257,8 @@ def test_second_part():
         '(--A) -> (B /\\ A)' : '(B/\\A)',
         '--<>[]--A' : '<>[]--A',
         '<><>[]<>A' : '<>[]<>A',
-        '<>[]A -> <><>(A -> []B)' : '<><>(A->[]B)'
+        '<>[]A -> <><>(A -> []B)' : '<><>(A->[]B)',
+        '[](A -> B)' : 'A -> B'
         # 'A -> B)' : 'B)', # shouldn't throw a ParensError
         # '(A -> B' : '(A' # should throw a ParensError
     }
@@ -284,4 +293,4 @@ def test_normalize():
         print('Looks good. Nice.')
 
 if __name__ == '__main__':
-    test_main_connective()
+    test_second_part()
