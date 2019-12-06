@@ -10,27 +10,24 @@ from Proof_Model import Proof_Model
 from copy import copy, deepcopy
 
 def get_logic():
-    print('Which modal logic would you like to work in?',
-          '(1) K',
-          '(2) KT', sep='\n', end='\n')
+    print('Which axioms would you like your modal logic to satisfy?',
+          'Choices are:', ' * T', ' * 4', 'Enter selections separated by commas', sep='\n', end='\n')
+    choices = input()
+
+    logic = 'K'
+
+    if 't' in choices.lower():
+        logic += 'T'
+    if '4' in choices:
+        logic += '4'
     
-    choice = input()
-    while not ('1' in choice or
-               '2' in choice or
-               choice.upper() == 'K' or
-               choice.upper() == 'KT'):
-        print('Sorry, %s is not a logic I know\nWhich modal logic would you like to work in?' % choice)
-        choice = input()
-    
-    if '1' in choice or choice.upper() == 'K':
-        return 'K'
-    elif '2' in choice or choice.upper() == 'KT':
-        return 'KT'
+    return logic
 
 def get_proposition():
     print('Enter the proposition you would like to check')
 
     proposition = normalize(input())
+    print(proposition)
 
     return proposition
 
@@ -38,7 +35,7 @@ def initialize_tableau(proposition, logic='K'):
     proposition = normalize(proposition)
     model = Proof_Model({})
     model.add_world('1', propositions={proposition : False})
-    if logic == 'KT':
+    if 'T' in logic:
         model.add_access('1', '1')
     
     return model
@@ -153,8 +150,10 @@ def complete_tableau(model, logic='K'):
                     
                     new_world_name = world + '.' + str(new_world_index)
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : False}}
-                    if logic == 'KT':
+                    if 'T' in logic:
                         worlds_to_add[new_world_name]['access'].append(new_world_name)
+                    if '4' in logic:
+                        worlds_to_add[new_world_name]['access'].append(world)
                     model.add_access(world, new_world_name)
 
                     propositions_to_remove.append(proposition)
@@ -167,8 +166,10 @@ def complete_tableau(model, logic='K'):
                     
                     new_world_name = world + '.' + str(new_world_index)
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : True}}
-                    if logic == 'KT':
+                    if 'T' in logic:
                         worlds_to_add[new_world_name]['access'].append(new_world_name)
+                    if '4' in logic:
+                        worlds_to_add[new_world_name]['access'].append(world)
                     model.add_access(world, new_world_name)
 
                     propositions_to_remove.append(proposition)
@@ -185,81 +186,81 @@ def complete_tableau(model, logic='K'):
         for world in model.worlds:
             for accessible_world in model.worlds[world]['access']:
                 propositions_to_remove = []
-                if logic == 'KT':
-                    propositions_to_add = {}
+                propositions_to_add = {}
+
                 for proposition in model.worlds[world]['propositions']:
                     if (main_connective(proposition) == '[]' and model.worlds[world]['propositions'][proposition]):
-                        if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                            if logic == 'K':
-                                model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
-                            elif logic == 'KT':
-                                propositions_to_add[normalize(second_part(proposition))] = True
-                            
-                        else:
-                            if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
+                        part_2 = normalize(second_part(proposition))
+
+                        if part_2 not in model.worlds[accessible_world]['propositions'] and part_2 not in propositions_to_add:
+                            propositions_to_add[part_2] = True
+                        elif part_2 in model.worlds[accessible_world]['propositions']:
+                            if not model.worlds[accessible_world]['propositions'][part_2]:
                                 return 'closed'
-                        
-                        propositions_to_remove.append(proposition)
+                        elif part_2 in propositions_to_add:
+                            if not propositions_to_add[proposition]:
+                                return 'closed'
                     
                     elif (main_connective(proposition) == '<>' and not model.worlds[world]['propositions'][proposition]):
-                        if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                            if logic == 'K':
-                                model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
-                            elif logic == 'KT':
-                                propositions_to_add[normalize(second_part(proposition))] = False
-                        
-                        else:
-                            if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
-                                return 'closed'
-                if logic == 'KT':
-                    for proposition in propositions_to_add:
-                        if proposition in model.worlds[world]['propositions']:
-                            if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
-                                return 'closed'
-                        model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
-                for proposition in propositions_to_remove:
-                    model.worlds[world]['propositions'].pop(proposition)
-    
-    for world in model.worlds:
-        for accessible_world in model.worlds[world]['access']:
-            propositions_to_remove = []
-            if logic == 'KT':
-                propositions_to_add = {}
-            for proposition in model.worlds[world]['propositions']:
-                if (main_connective(proposition) == '[]' and
-                    model.worlds[world]['propositions'][proposition]):
-                    if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                        if logic == 'K':
-                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = True
-                        elif logic == 'KT':
-                            propositions_to_add[normalize(second_part(proposition))] = True
-                        
-                    else:
-                        if not model.worlds[accessible_world]['propositions'][second_part(proposition)]:
-                            return 'closed'
-                    
-                    propositions_to_remove.append(proposition)
-                
-                elif (main_connective(proposition) == '<>' and
-                      not model.worlds[world]['propositions'][proposition]):
-                    if second_part(proposition) not in model.worlds[accessible_world]['propositions']:
-                        if logic == 'K':
-                            model.worlds[accessible_world]['propositions'][normalize(second_part(proposition))] = False
-                        elif logic == 'KT':
+                        part_2 = normalize(second_part(proposition))
+
+                        if part_2 not in model.worlds[accessible_world]['propositions'] and part_2 not in propositions_to_add:
                             propositions_to_add[normalize(second_part(proposition))] = False
-                    
-                    else:
-                        if model.worlds[accessible_world]['propositions'][second_part(proposition)]:
-                            return 'closed'
-                    
-                    propositions_to_remove.append(proposition)
-            
-            if logic == 'KT':
+                        elif part_2 in model.worlds[accessible_world]['propositions']:
+                            if model.worlds[accessible_world]['propositions'][part_2]:
+                                return 'closed'
+                        elif part_2 in propositions_to_add:
+                            if propositions_to_add[part_2]:
+                                return 'closed'
+                
                 for proposition in propositions_to_add:
                     if proposition in model.worlds[world]['propositions']:
                         if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
                             return 'closed'
                     model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
+                
+                for proposition in propositions_to_remove:
+                    model.worlds[world]['propositions'].pop(proposition)
+        print(model)
+    
+    for world in model.worlds:
+        for accessible_world in model.worlds[world]['access']:
+            propositions_to_remove = []
+            propositions_to_add = {}
+
+            for proposition in model.worlds[world]['propositions']:
+                if (main_connective(proposition) == '[]' and model.worlds[world]['propositions'][proposition]):
+                    part_2 = normalize(second_part(proposition))
+
+                    if part_2 not in model.worlds[accessible_world]['propositions'] and part_2 not in propositions_to_add:
+                        propositions_to_add[part_2] = True
+                    elif part_2 in model.worlds[accessible_world]['propositions']:
+                        if not model.worlds[accessible_world]['propositions'][part_2]:
+                            return 'closed'
+                    elif part_2 in propositions_to_add:
+                        if not propositions_to_add[proposition]:
+                            return 'closed'
+                    
+                    propositions_to_remove.append(proposition)
+                
+                elif (main_connective(proposition) == '<>' and not model.worlds[world]['propositions'][proposition]):
+                    if part_2 not in model.worlds[accessible_world]['propositions'] and part_2 not in propositions_to_add:
+                        propositions_to_add[normalize(second_part(proposition))] = True
+                    elif part_2 in model.worlds[accessible_world]['propositions']:
+                        if model.worlds[accessible_world]['propositions'][part_2]:
+                            return 'closed'
+                    elif part_2 in propositions_to_add:
+                        if propositions_to_add[part_2]:
+                            return 'closed'
+                    
+                    propositions_to_remove.append(proposition)
+            
+            for proposition in propositions_to_add:
+                if proposition in model.worlds[world]['propositions']:
+                    if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
+                        return 'closed'
+                model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
+            
             for proposition in propositions_to_remove:
                 model.worlds[world]['propositions'].pop(proposition)
     
