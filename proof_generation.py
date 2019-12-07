@@ -27,7 +27,6 @@ def get_proposition():
     print('Enter the proposition you would like to check')
 
     proposition = normalize(input())
-    print(proposition)
 
     return proposition
 
@@ -221,7 +220,10 @@ def complete_tableau(model, logic='K'):
                 
                 for proposition in propositions_to_remove:
                     model.worlds[world]['propositions'].pop(proposition)
-        print(model)
+        
+        if len(model.worlds) > 128:
+            print('MAXIMUM NUMBER OF WORLDS EXCEEDED (128)')
+            return 'open'
     
     for world in model.worlds:
         for accessible_world in model.worlds[world]['access']:
@@ -240,10 +242,10 @@ def complete_tableau(model, logic='K'):
                     elif part_2 in propositions_to_add:
                         if not propositions_to_add[proposition]:
                             return 'closed'
-                    
-                    propositions_to_remove.append(proposition)
                 
                 elif (main_connective(proposition) == '<>' and not model.worlds[world]['propositions'][proposition]):
+                    part_2 = normalize(second_part(proposition))
+
                     if part_2 not in model.worlds[accessible_world]['propositions'] and part_2 not in propositions_to_add:
                         propositions_to_add[normalize(second_part(proposition))] = True
                     elif part_2 in model.worlds[accessible_world]['propositions']:
@@ -252,8 +254,6 @@ def complete_tableau(model, logic='K'):
                     elif part_2 in propositions_to_add:
                         if propositions_to_add[part_2]:
                             return 'closed'
-                    
-                    propositions_to_remove.append(proposition)
             
             for proposition in propositions_to_add:
                 if proposition in model.worlds[world]['propositions']:
