@@ -10,7 +10,8 @@ class Proof_Model(Model):
             }
     
     def add_access(self, world, world_to_access):
-        self.worlds[world]['access'].append(world_to_access)
+        if world_to_access not in self.worlds[world]['access']:
+            self.worlds[world]['access'].append(world_to_access)
     
     def __str__(self):
         string_rep = ''
