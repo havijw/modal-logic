@@ -18,7 +18,7 @@ def get_logic():
 
     if 't' in choices.lower():
         logic += 'T'
-    if 'B' in choices.lower():
+    if 'b' in choices.lower():
         logic += 'B'
     if '4' in choices:
         logic += '4'
@@ -151,10 +151,23 @@ def complete_tableau(model, logic='K'):
                     
                     new_world_name = world + '.' + str(new_world_index)
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : False}}
+                    
+                    # logic for transitivity
+                    if '4' in logic:
+                        for world_1 in model.worlds:
+                            for world_2 in model.worlds[world_1]['access']:
+                                if world_2 in model.worlds:
+                                    if world in model.worlds[world_2]['access']:
+                                        model.add_access(world_1, new_world_name)
+
+                    # logic for reflexivity (T axiom)
                     if 'T' in logic:
                         worlds_to_add[new_world_name]['access'].append(new_world_name)
+                    
+                    # logic for symmetry (B axiom)
                     if 'B' in logic:
                         worlds_to_add[new_world_name]['access'].append(world)
+                    
                     model.add_access(world, new_world_name)
 
                     propositions_to_remove.append(proposition)
@@ -167,10 +180,23 @@ def complete_tableau(model, logic='K'):
                     
                     new_world_name = world + '.' + str(new_world_index)
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : True}}
+                    
+                    # logic for transitivity
+                    if '4' in logic:
+                        for world_1 in model.worlds:
+                            for world_2 in model.worlds[world_1]['access']:
+                                if world_2 in model.worlds:
+                                    if world in model.worlds[world_2]['access']:
+                                        model.add_access(world_1, new_world_name)
+
+                    # logic for reflexivity
                     if 'T' in logic:
                         worlds_to_add[new_world_name]['access'].append(new_world_name)
+                    
+                    # logic for symmetry
                     if 'B' in logic:
                         worlds_to_add[new_world_name]['access'].append(world)
+
                     model.add_access(world, new_world_name)
 
                     propositions_to_remove.append(proposition)
@@ -226,6 +252,7 @@ def complete_tableau(model, logic='K'):
         if len(model.worlds) > 128:
             print('MAXIMUM NUMBER OF WORLDS EXCEEDED (128)')
             return 'open'
+        print(model)
     
     for world in model.worlds:
         for accessible_world in model.worlds[world]['access']:
