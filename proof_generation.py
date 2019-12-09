@@ -11,15 +11,15 @@ from copy import copy, deepcopy
 
 def get_logic():
     print('Which axioms would you like your modal logic to satisfy?',
-          'Choices are:', ' * T', ' * 4', 'Enter selections separated by commas', sep='\n', end='\n')
+          'Choices are:', ' * T', ' * B', 'Enter selections separated by commas', sep='\n', end='\n')
     choices = input()
 
     logic = 'K'
 
     if 't' in choices.lower():
         logic += 'T'
-    if '4' in choices:
-        logic += '4'
+    if 'B' in choices:
+        logic += 'B'
     
     return logic
 
@@ -151,7 +151,7 @@ def complete_tableau(model, logic='K'):
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : False}}
                     if 'T' in logic:
                         worlds_to_add[new_world_name]['access'].append(new_world_name)
-                    if '4' in logic:
+                    if 'B' in logic:
                         worlds_to_add[new_world_name]['access'].append(world)
                     model.add_access(world, new_world_name)
 
@@ -167,7 +167,7 @@ def complete_tableau(model, logic='K'):
                     worlds_to_add[new_world_name] = {'access' : [], 'variables' : {}, 'propositions' : {second_part(proposition) : True}}
                     if 'T' in logic:
                         worlds_to_add[new_world_name]['access'].append(new_world_name)
-                    if '4' in logic:
+                    if 'B' in logic:
                         worlds_to_add[new_world_name]['access'].append(world)
                     model.add_access(world, new_world_name)
 
