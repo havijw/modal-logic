@@ -11,15 +11,17 @@ from copy import copy, deepcopy
 
 def get_logic():
     print('Which axioms would you like your modal logic to satisfy?',
-          'Choices are:', ' * T', ' * B', 'Enter selections separated by commas', sep='\n', end='\n')
+          'Choices are:', ' * T', ' * 4', ' * B', 'Enter selections separated by commas', sep='\n', end='\n')
     choices = input()
 
     logic = 'K'
 
     if 't' in choices.lower():
         logic += 'T'
-    if 'B' in choices:
+    if 'B' in choices.lower():
         logic += 'B'
+    if '4' in choices:
+        logic += '4'
     
     return logic
 
@@ -213,10 +215,10 @@ def complete_tableau(model, logic='K'):
                                 return 'closed'
                 
                 for proposition in propositions_to_add:
-                    if proposition in model.worlds[world]['propositions']:
-                        if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
+                    if proposition in model.worlds[accessible_world]['propositions']:
+                        if not model.worlds[accessible_world]['propositions'][proposition] == propositions_to_add[proposition]:
                             return 'closed'
-                    model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
+                    model.worlds[accessible_world]['propositions'][proposition] = propositions_to_add[proposition]
                 
                 for proposition in propositions_to_remove:
                     model.worlds[world]['propositions'].pop(proposition)
@@ -247,7 +249,7 @@ def complete_tableau(model, logic='K'):
                     part_2 = normalize(second_part(proposition))
 
                     if part_2 not in model.worlds[accessible_world]['propositions'] and part_2 not in propositions_to_add:
-                        propositions_to_add[normalize(second_part(proposition))] = True
+                        propositions_to_add[normalize(second_part(proposition))] = False
                     elif part_2 in model.worlds[accessible_world]['propositions']:
                         if model.worlds[accessible_world]['propositions'][part_2]:
                             return 'closed'
@@ -256,10 +258,10 @@ def complete_tableau(model, logic='K'):
                             return 'closed'
             
             for proposition in propositions_to_add:
-                if proposition in model.worlds[world]['propositions']:
-                    if not model.worlds[world]['propositions'][proposition] == propositions_to_add[proposition]:
+                if proposition in model.worlds[accessible_world]['propositions']:
+                    if not model.worlds[accessible_world]['propositions'][proposition] == propositions_to_add[proposition]:
                         return 'closed'
-                model.worlds[world]['propositions'][proposition] = propositions_to_add[proposition]
+                model.worlds[accessible_world]['propositions'][proposition] = propositions_to_add[proposition]
             
             for proposition in propositions_to_remove:
                 model.worlds[world]['propositions'].pop(proposition)
