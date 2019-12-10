@@ -8,8 +8,7 @@ in the main directory. Once the program is open, click anywhere to create a worl
 ## Proof Generation
 Another tool is a general program for checking propositions in a given modal logic. To use this, run
 ```python3 proof_generation.py```
-in the main directory. From here, you can choose a modal logic to work in and type a proposition to check if it is valid in that logic. The system used is based on the method of tableau. Note that it is possible to generate an infinite tableau from a proposition, in which case the program will just hang indefinitely. Please just kill the program, as it will never finish.
-
-Currently, the following logics are supported:
-* K
-* KT
+in the main directory. From here, you can choose which logic you want to work in by specifying properties it should have, then enter a proposition to check. The program uses a system based on modal taleaux to see if the given formula is valid in an arbitrary logic with the given properties. There are some formulas that induce an infinitely long tree, and to protect against this the program exits if the model it builds has more than 50 worlds at any point. In this case, it is extremely likely that the formula is invalid, but the maiximum number of worlds can be increased by modifying the MAX_WORLDS variable in the code. Currently, the following properties are supported:
+* Reflexivity (the T axiom)
+* Transitivity (the 4 axiom)
+* Symmetry (the B axiom)
