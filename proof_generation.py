@@ -9,6 +9,9 @@ from parsing_functions import (
 from Proof_Model import Proof_Model
 from copy import copy, deepcopy
 
+# modify to allow more worlds in the models generated
+MAX_WORLDS = 50
+
 def get_logic():
     print('Which axioms would you like your modal logic to satisfy?',
           'Choices are:', ' * T\t(Reflexive)', ' * 4\t(Transitive)', ' * B\t(Symmetric)', 'Enter selections separated by commas', sep='\n', end='\n')
@@ -269,10 +272,9 @@ def complete_tableau(model, logic='K'):
                 for proposition in propositions_to_remove:
                     model.worlds[world]['propositions'].pop(proposition)
         
-        if len(model.worlds) > 50:
-            print('EXCEEDED 50 WORLDS, EXITING')
+        if len(model.worlds) > MAX_WORLDS:
+            print('EXCEEDED %i WORLDS, EXITING' % MAX_WORLDS)
             return 'open'
-        # print(len(model.worlds), '\r')
     
     for world in model.worlds:
         for accessible_world in model.worlds[world]['access']:
