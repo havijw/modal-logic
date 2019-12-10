@@ -11,7 +11,7 @@ from copy import copy, deepcopy
 
 def get_logic():
     print('Which axioms would you like your modal logic to satisfy?',
-          'Choices are:', ' * T', ' * 4', ' * B', 'Enter selections separated by commas', sep='\n', end='\n')
+          'Choices are:', ' * T\t(Reflexive)', ' * 4\t(Transitive)', ' * B\t(Symmetric)', 'Enter selections separated by commas', sep='\n', end='\n')
     choices = input()
 
     logic = 'K'
@@ -69,9 +69,11 @@ def is_reducible(model):
 def complete_tableau(model, logic='K'):
     while is_reducible(model):
         worlds_to_add = {}
+        access_to_add = {}
         for world in model.worlds:
             propositions_to_add = {}
             propositions_to_remove = []
+            world_access_to_add = []
             for proposition in copy(model.worlds[world]['propositions']):
                 main_con = main_connective(proposition)
 
@@ -154,11 +156,11 @@ def complete_tableau(model, logic='K'):
                     
                     # logic for transitivity
                     if '4' in logic:
-                        for world_1 in model.worlds:
-                            for world_2 in model.worlds[world_1]['access']:
-                                if world_2 in model.worlds:
-                                    if world in model.worlds[world_2]['access']:
-                                        model.add_access(world_1, new_world_name)
+                        while not model.is_transitive():
+                            for world_1 in model.worlds:
+                                for world_2 in model.worlds[world_1]['access']:
+                                    for world_3 in model.worlds[world_2]['access']:
+                                        model.add_access(world_1, world_3)
 
                     # logic for reflexivity (T axiom)
                     if 'T' in logic:
@@ -168,7 +170,7 @@ def complete_tableau(model, logic='K'):
                     if 'B' in logic:
                         worlds_to_add[new_world_name]['access'].append(world)
                     
-                    model.add_access(world, new_world_name)
+                    world_access_to_add.append(new_world_name)
 
                     propositions_to_remove.append(proposition)
                 
@@ -183,11 +185,11 @@ def complete_tableau(model, logic='K'):
                     
                     # logic for transitivity
                     if '4' in logic:
-                        for world_1 in model.worlds:
-                            for world_2 in model.worlds[world_1]['access']:
-                                if world_2 in model.worlds:
-                                    if world in model.worlds[world_2]['access']:
-                                        model.add_access(world_1, new_world_name)
+                        while not model.is_transitive():
+                            for world_1 in model.worlds:
+                                for world_2 in model.worlds[world_1]['access']:
+                                    for world_3 in model.worlds[world_2]['access']:
+                                        model.add_access(world_1, world_3)
 
                     # logic for reflexivity
                     if 'T' in logic:
@@ -196,8 +198,8 @@ def complete_tableau(model, logic='K'):
                     # logic for symmetry
                     if 'B' in logic:
                         worlds_to_add[new_world_name]['access'].append(world)
-
-                    model.add_access(world, new_world_name)
+                    
+                    world_access_to_add.append(new_world_name)
 
                     propositions_to_remove.append(proposition)
             
@@ -205,9 +207,27 @@ def complete_tableau(model, logic='K'):
                 model.worlds[world]['propositions'].pop(proposition)
 
             model.worlds[world]['propositions'].update(propositions_to_add)
+
+            access_to_add[world] = world_access_to_add
         
         for world in worlds_to_add:
             model.add_world(world, worlds_to_add[world]['access'], worlds_to_add[world]['variables'], worlds_to_add[world]['propositions'])
+        
+        for world in access_to_add:
+            for accessible_world in access_to_add[world]:
+                model.add_access(world, accessible_world)
+        
+        while (
+            ('4' in logic and not model.is_transitive()) or
+            ('T' in logic and not model.is_reflexive()) or
+            ('B' in logic and not model.is_symmetric())
+        ):
+            if '4' in logic:
+                model.make_transitive()
+            if 'T' in logic:
+                model.make_reflexive()
+            if 'B' in logic:
+                model.make_symmetric()
         
         # changing things at new worlds that have been created based on True [] or False <>
         for world in model.worlds:
@@ -249,10 +269,10 @@ def complete_tableau(model, logic='K'):
                 for proposition in propositions_to_remove:
                     model.worlds[world]['propositions'].pop(proposition)
         
-        if len(model.worlds) > 128:
-            print('MAXIMUM NUMBER OF WORLDS EXCEEDED (128)')
+        if len(model.worlds) > 50:
+            print('EXCEEDED 50 WORLDS, EXITING')
             return 'open'
-        print(model)
+        # print(len(model.worlds), '\r')
     
     for world in model.worlds:
         for accessible_world in model.worlds[world]['access']:
