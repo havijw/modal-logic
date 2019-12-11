@@ -15,9 +15,9 @@ Connectives to use
  * and:      /\\
  * or:       \\/
  * implies:  ->
- Please note that for some reason, the checking only works the first time, so
- you should exit and restart the program after checking the first time.
- (I am working on this and hopefully will be able to fix it).'''
+Please note that for some reason, the checking only works the first time,
+so you should exit and restart the program after checking the first time.
+(I am working on this and hopefully will be able to fix it).'''
 
 def delete_initial_text(event):
     proposition_entry.delete(0, 'end')
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # instructions
     instructions = tk.Label(root)
-    instructions.configure(text=INSTRUCTIONS, anchor='w', justify='left', bg=BACKGROUND)
+    instructions.configure(text=INSTRUCTIONS, font=('Courier', 14), anchor='w', justify='left', bg=BACKGROUND)
     instructions.grid(sticky='w')
 
     # logic check boxes for properties
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     symmetric_checkbox.grid(sticky='w')
 
     # proposition entry box
-    proposition_entry = tk.Entry(root)#, font=('Courier', 14))
+    proposition_entry = tk.Entry(root)
     proposition_entry.grid(sticky='w')
 
     proposition_entry.insert(0, 'Enter a proposition')
