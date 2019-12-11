@@ -4,7 +4,7 @@ from Proof_Model import Proof_Model
 
 import tkinter as tk
 
-BACKGROUND= '#d6d6d6'
+BACKGROUND= '#FFFFFF'
 
 INSTRUCTIONS = '''Choose properties of a modal logic, then enter a proposition to check.
 Connectives to use
