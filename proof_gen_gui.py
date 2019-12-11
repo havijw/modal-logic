@@ -33,9 +33,8 @@ def check_current_proposition(event):
     if symmetric_true:
         logic += 'B'
     
-    model = initialize_tableau(proposition_entry.get())
-    print(model)
-    result = complete_tableau(model)
+    model = initialize_tableau(proposition_entry.get(), logic)
+    result = complete_tableau(model, logic)
     if result == 'open':
         root.configure(bg='#ff4d4d')
         reflexive_checkbox.configure(bg='#ff4d4d')
@@ -51,7 +50,6 @@ def check_current_proposition(event):
         instructions.configure(bg='#7aff81')
     
     model = Proof_Model()
-    print(model)
 
 
 if __name__ == '__main__':
@@ -60,7 +58,7 @@ if __name__ == '__main__':
 
     # instructions
     instructions = tk.Label(root)
-    instructions.configure(text=INSTRUCTIONS, anchor='w', justify='left')
+    instructions.configure(text=INSTRUCTIONS, anchor='w', justify='left', bg=BACKGROUND)
     instructions.grid(sticky='w')
 
     # logic check boxes for properties
